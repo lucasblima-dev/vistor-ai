@@ -6,8 +6,8 @@
 
 | Sprint | Descrição | Status | Concluída em |
 |---|---|---|---|
-| 0 | Arquivos base (gitignore, env, docs, estrutura) | ✅ Concluído | 29/04/2026 |
-| 1 | Docker Compose (PostgreSQL, MinIO, Redis) | ⬜ Pendente | — |
+| 0 | Arquivos base (gitignore, env, docs, estrutura) | ✅ Concluído | 27/04/2026 |
+| 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ⬜ Pendente | — |
 | 3 | Models SQLAlchemy + Migrations Alembic | ⬜ Pendente | — |
 | 4 | Autenticação (JWT, refresh, blacklist) | ⬜ Pendente | — |
@@ -33,7 +33,8 @@
 
 ## Última sessão
 
-**Data:** 27/04/2026
+**Data:** 29/04/2026
+
 **Sprint:** 0 - Arquivos base
 **Sessão:** Estrutura inicial do projeto
 
@@ -66,22 +67,81 @@ completa de `backend/`. Depois abrir sessão da Sprint 1 para o `docker-compose.
 ## Última sessão
 
 **Data:** 29/04/2026
-**Sprint:** 0 - Arquivos base
-**Sessão:** Estrutura inicial do projeto
+**Sprint:** 1 - Docker Compose + Dependências
+**Sessão:** Configuração da Infraestrutura
 
 ### O que foi feito
-- `GEMINI.md` em `docs/` para o *admin*, *gestor* e *inspetor*
+- Arquivo `docker-compose.yml` criado com serviços: `db` (PostGIS), `minio`, `redis` e `api`.
+- Configuração de redes internas e volumes persistentes.
+- Integração com variáveis de ambiente do `.env`.
+- *Healthcheck* configurado para o banco de dados.
 
 ### Estado dos arquivos tocados
-- `docs/` — arquivos `GEMINI.md` completos, exceto do módulo *mobile*
+- `docker-compose.yml` — completo e funcional.
 
 ### Validações que passaram
-— Checagem dos *RF's* e *RN's* na documentação, para garantir que estão de acordo com os `GEMINI.md`
+- Estrutura do YAML validada conforme os requisitos do sistema.
+- Validar a execução dos containers com `docker-compose up`.
 
 ### O que ficou pendente
-- Finalizar preenchimento dos `GEMINI.md` em `docs/mobile/`
+- Nada referente a task 1.1: `docker-compose.yml` + testes 
 
 ### Próxima ação
-Abrir sessão da Sprint 1 para o `docker-compose.yml`.
+Iniciar a task 1.2 
+
+---
+
+## Última sessão
+
+**Data:** 29/04/2026
+**Sprint:** 1 - Docker Compose + Dependências
+**Sessão:** Configuração do Ambiente Backend (Task 1.2)
+
+### O que foi feito
+- Arquivo `backend/pyproject.toml` criado com todas as dependências de produção e desenvolvimento.
+- Configuração do sistema de build (`hatchling`), `pytest` (async mode) e `ruff` (line length).
+- Inclusão de pacotes críticos: PostGIS (`geoalchemy2`), IA (`onnxruntime`), PDF (`weasyprint`) e S3 (`aiobotocore`).
+
+### Estado dos arquivos tocados
+- `backend/pyproject.toml` — completo e configurado.
+
+### Validações que passaram
+- Verificação da sintaxe TOML e presença de todas as dependências solicitadas.
+
+### O que ficou pendente
+- Task 1.3: 
+
+### Próxima ação
+Aguardando definição da task 1.3.
+
+---
+
+## Última sessão
+
+**Data:** 05/05/2026
+**Sprint:** 1 - Docker Compose + Dependências
+**Sessão:** Dockerização do Backend (Task 1.3)
+
+### O que foi feito
+- Arquivo `backend/Dockerfile` criado com multi-stage build (`builder` e `runtime`).
+- Instalação de dependências de sistema para WeasyPrint, PostGIS e python-magic.
+- Configuração de usuário não-root (`appuser`) para segurança.
+- Suporte dinâmico para ambiente de desenvolvimento (`--reload`) via `BUILD_ENV`.
+- Arquivo `backend/.dockerignore` criado para otimização e segurança.
+
+### Estado dos arquivos tocados
+- `backend/Dockerfile` — completo e otimizado.
+- `backend/.dockerignore` — completo.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+- Dockerfile segue as melhores práticas (non-root, multi-stage, slim image).
+- Variáveis de ambiente e comandos de inicialização configurados conforme requisitos.
+
+### O que ficou pendente
+- Nada referente a Sprint 1.
+
+### Próxima ação
+Sprint 2: Criação do esqueleto FastAPI e endpoint de health check.
 
 ---

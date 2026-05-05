@@ -4,7 +4,12 @@
   },
   "context": {
     "fileName": "GEMINI.md",
-    "includeDirectories": true,
+    "includeDirectories": [
+      ".",
+      "docs",
+      "backend",
+      "mobile"
+    ],
     "respectGitIgnore": true,
     "respectGeminiIgnore": true,
     "fileFiltering": {
