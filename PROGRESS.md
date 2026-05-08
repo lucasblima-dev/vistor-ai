@@ -343,3 +343,46 @@ Task 3.2: Inicializar Alembic, configurar `env.py` para detectar os modelos e ge
 ### Próxima ação
 
 Task 3.3: Gerar e aplicar a primeira migration para criar as tabelas no PostgreSQL.
+
+---
+
+## Task 10
+
+**Data:** 08/05/2026
+**Sprint:** 3 - Models SQLAlchemy + Migrations Alembic
+**Sessão:** Migrações Manuais (Task 3.3)
+
+### O que foi feito
+
+- Criadas 5 migrações manuais sequenciais em `alembic/versions/`:
+  - `0001_create_users`: Tabela de usuários e Enum `role_enum`.
+  - `0002_create_inspections`: Tabela de inspeções, Enums `severity_enum` e `status_enum`, extensão PostGIS, índice GIST em `location` e índice parcial em `deleted_at`.
+  - `0003_create_media`: Tabela de mídias e Enum `media_type_enum`.
+  - `0004_create_reports`: Tabela de laudos técnicos.
+  - `0005_create_audit_log`: Tabela de auditoria e índice composto em `entity`.
+- Garantida a integridade referencial através da ordem de criação e `down_revision`.
+- Implementado suporte a UUIDs nativos do PostgreSQL com `gen_random_uuid()`.
+- Configurados Enums explícitos com criação e remoção manual (`upgrade`/`downgrade`).
+
+### Estado dos arquivos tocados
+
+- `backend/alembic/versions/0001_create_users.py` — completo.
+- `backend/alembic/versions/0002_create_inspections.py` — completo.
+- `backend/alembic/versions/0003_create_media.py` — completo.
+- `backend/alembic/versions/0004_create_reports.py` — completo.
+- `backend/alembic/versions/0005_create_audit_log.py` — completo.
+- `PROGRESS.md` — Sprint 3 em fase final.
+
+### Validações que passaram
+
+- Comando `python -m alembic heads` confirma a ponta da cadeia em `0005`.
+- Cadeia de `down_revision` validada como linear.
+- Verificação visual dos tipos PostGIS e restrições de FK.
+
+### O que ficou pendente
+
+- Execução das migrações (`upgrade head`) contra um banco de dados real.
+
+### Próxima ação
+
+Iniciar Sprint 4
