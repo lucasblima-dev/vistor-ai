@@ -9,7 +9,7 @@
 | 0 | Arquivos base (gitignore, env, docs, estrutura) | ✅ Concluído | 27/04/2026 |
 | 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
-| 3 | Models SQLAlchemy + Migrations Alembic | 🔄 Em andamento | — |
+| 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
 | 4 | Autenticação (JWT, refresh, blacklist) | ⬜ Pendente | — |
 | 5 | Inspeções CRUD + PostGIS | ⬜ Pendente | — |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
