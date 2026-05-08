@@ -304,3 +304,42 @@ Iniciar Sprint 3: Models SQLAlchemy e Migrations Alembic.
 ### Próxima ação
 
 Task 3.2: Inicializar Alembic, configurar `env.py` para detectar os modelos e gerar a migration inicial.
+
+---
+
+## Task 09
+
+**Data:** 08/05/2026
+**Sprint:** 3 - Models SQLAlchemy + Migrations Alembic
+**Sessão:** Configuração do Alembic (Task 3.2)
+
+### O que foi feito
+
+- Criado `alembic.ini` com configuração de `script_location` e `file_template` personalizado.
+- Implementado `alembic/env.py` com suporte completo a SQLAlchemy assíncrono e carregamento dinâmico de modelos.
+- Criado `alembic/script.py.mako` personalizado com imports para `GeoAlchemy2` (Geometry).
+- Criado diretório `alembic/versions` para armazenamento das migrations.
+- Criado arquivo `.env` local no backend para suporte à execução de ferramentas CLI.
+- Instaladas dependências necessárias no ambiente: `alembic`, `geoalchemy2`, `asyncpg`, `pydantic-settings`.
+
+### Estado dos arquivos tocados
+
+- `backend/alembic.ini` — completo.
+- `backend/alembic/env.py` — completo e validado.
+- `backend/alembic/script.py.mako` — completo.
+- `backend/.env` — criado para suporte local.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Comando `python -m alembic current` executa sem erros de importação ou sintaxe.
+- Modelos são detectados corretamente através da importação em `env.py`.
+- Suporte a `AsyncEngine` confirmado no fluxo de execução do Alembic.
+
+### O que ficou pendente
+
+- Task 3.3: Geração da primeira migration (`revision --autogenerate`) e aplicação no banco de dados.
+
+### Próxima ação
+
+Task 3.3: Gerar e aplicar a primeira migration para criar as tabelas no PostgreSQL.
