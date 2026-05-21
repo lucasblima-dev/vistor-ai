@@ -620,3 +620,40 @@ Sprint 5: Implementação do CRUD de Inspeções com integração PostGIS.
 ### Próxima ação
 
 Task 5.2: Implementar o Service de Inspeções, lidando com lógica do PostGIS e regras de negócio.
+
+---
+
+## Task 17
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Service de Inspeções (Task 5.2)
+
+### O que foi feito
+
+- Implementado `app/services/inspection_service.py` com suporte completo a CRUD.
+- Integrada lógica PostGIS (`ST_GeomFromText`, `ST_DWithin`, `ST_Distance`) para manipulação de coordenadas e busca por proximidade.
+- Implementado controle de acesso (IDOR check) em `get_by_id`, garantindo que inspetores só acessem suas próprias inspeções ou as atribuídas a eles.
+- Adicionada paginação baseada em cursor (`created_at`) e filtros por papel (RBAC) na listagem.
+- Validada transição de status em `update` (bloqueio de reabertura direta de inspeções resolvidas).
+- Implementado *soft delete* garantindo que registros nunca sejam removidos fisicamente do banco.
+- Adicionado registro automático de logs de auditoria (`audit_service.log_action`) para todas as operações de escrita (create, update, delete).
+
+### Estado dos arquivos tocados
+
+- `backend/app/services/inspection_service.py` — completo e funcional.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Lógica de negócio isolada no Service conforme os princípios invioláveis da arquitetura.
+- Uso correto de casts para `Geography` no PostGIS para garantir precisão em metros nas buscas espaciais.
+- Conformidade com as regras de IDOR e RBAC descritas no `GEMINI.md`.
+
+### O que ficou pendente
+
+- Implementação dos routers (`app/routers/inspections.py` e `app/routers/geo.py`) para expor essas funcionalidades via API.
+
+### Próxima ação
+
+Task 5.3: Implementar os routers de inspeção e geoespacial.
