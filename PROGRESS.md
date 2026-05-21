@@ -10,11 +10,13 @@
 | 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
-| 4 | Autenticação (JWT, refresh, blacklist) | ⬜ Pendente | — |
+| 4 | Autenticação (JWT, refresh, blacklist) | 🔄 Em andamento | 21/05/2026 |
 | 5 | Inspeções CRUD + PostGIS | ⬜ Pendente | — |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
+
+> Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
 
 ### Mobile
 
@@ -26,8 +28,6 @@
 | 12 | Mapa + Heatmap | ⬜ Pendente | — |
 | 13 | Laudos + Perfil + Offline | ⬜ Pendente | — |
 | 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — |
-
-> Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
 
 ---
 
@@ -386,3 +386,44 @@ Task 3.3: Gerar e aplicar a primeira migration para criar as tabelas no PostgreS
 ### Próxima ação
 
 Iniciar Sprint 4
+
+---
+
+## Task 11
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Schemas de Autenticação e Usuários (Task 4.1)
+
+### O que foi feito
+
+- Criado `app/schemas/auth.py` com schemas:
+  - `LoginRequest`: Validação de email e senha para login.
+  - `TokenResponse`: Estrutura de retorno de tokens JWT.
+  - `RefreshRequest`: Schema para renovação de access token.
+  - `UserOut`: Schema de saída para dados do usuário com `from_attributes=True` (Pydantic v2).
+- Criado `app/schemas/user.py` com schemas:
+  - `UserCreate`: Criação de usuário com validação de senha (min 8 chars) e role.
+  - `UserUpdate`: Atualização parcial de nome e email.
+- Utilizado `ConfigDict` para configurações do Pydantic v2.
+- Integrado `UserRole` Enum dos modelos para validação estrita no `UserCreate`.
+
+### Estado dos arquivos tocados
+
+- `backend/app/schemas/auth.py` — completo.
+- `backend/app/schemas/user.py` — completo.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Revisão dos tipos de dados e nomes de campos conforme `GEMINI.md`.
+- Garantia de que a senha em `UserCreate` possui `min_length=8`.
+
+### O que ficou pendente
+
+- Implementação do `auth_service.py` para lógica de login e geração de tokens.
+- Implementação dos endpoints de auth no router.
+
+### Próxima ação
+
+Task 4.2: Implementar lógica de segurança e JWT no backend.
