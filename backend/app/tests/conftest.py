@@ -18,7 +18,11 @@ from app.schemas.user import UserCreate
 
 # Configuração do banco de teste
 TEST_DB_NAME = "vistor_ai_test"
-SQLALCHEMY_DATABASE_URL_TEST = settings.DATABASE_URL.replace("vistor_ai", TEST_DB_NAME)
+# Se estiver rodando fora do Docker, 'db' não será resolvido. Trocamos para localhost se necessário.
+db_url = settings.DATABASE_URL
+if "db:5432" in db_url:
+    db_url = db_url.replace("db:5432", "localhost:5432")
+SQLALCHEMY_DATABASE_URL_TEST = db_url.replace("vistor_ai", TEST_DB_NAME)
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -27,7 +31,7 @@ def event_loop():
     loop.close()
 
 async def create_test_db():
-    admin_url = settings.DATABASE_URL.replace("vistor_ai", "postgres")
+    admin_url = db_url.replace("vistor_ai", "postgres")
     admin_engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
     async with admin_engine.connect() as conn:
         result = await conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname='{TEST_DB_NAME}'"))
@@ -62,7 +66,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
     async with session_factory() as session:
         yield session
-        await session.execute(text("TRUNCATE users, audit_log CASCADE"))
+        await session.execute(text("TRUNCATE users, audit_log, inspections CASCADE"))
         await session.commit()
     await engine.dispose()
 
@@ -79,6 +83,16 @@ async def client(db_session: AsyncSession, redis_client: FakeRedis) -> AsyncGene
         yield ac
     
     app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture
+async def authed_client(client: AsyncClient, inspector_token: str) -> AsyncClient:
+    client.headers.update({"Authorization": f"Bearer {inspector_token}"})
+    return client
+
+@pytest_asyncio.fixture
+async def manager_client(client: AsyncClient, manager_token: str) -> AsyncClient:
+    client.headers.update({"Authorization": f"Bearer {manager_token}"})
+    return client
 
 @pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession):

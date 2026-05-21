@@ -11,7 +11,7 @@
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
 | 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
-| 5 | Inspeções CRUD + PostGIS | 🔄 Em andamento | 21/05/2026 |
+| 5 | Inspeções CRUD + PostGIS | ✅ Concluído | 21/05/2026 |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
@@ -604,8 +604,8 @@ Sprint 5: Implementação do CRUD de Inspeções com integração PostGIS.
 
 ### Estado dos arquivos tocados
 
-- `backend/app/schemas/inspection.py` — preenchido e completo.
-- `backend/app/schemas/user.py` — atualizado com inclusão de `UserOut` que era necessário.
+- `backend/app/schemas/inspection.py` — completo.
+- `backend/app/schemas/user.py` — atualizado com inclusão de `UserOut`.
 - `PROGRESS.md` — atualizado.
 
 ### Validações que passaram
@@ -696,8 +696,52 @@ Task 5.3: Implementar os routers de inspeção e geoespacial.
 
 ### O que ficou pendente
 
-- Nada referente a Sprint 5.
+- Finalizar o `app/tests/test_inspections.py` com cobertura completa dos cenários de CRUD e Geolocalização.
 
 ### Próxima ação
 
-Sprint 6: Mídia — upload/download MinIO.
+Task 5.4: Testes de integração das Inspeções
+
+---
+
+## Task 19
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Testes de Integração de Inspeções (Task 5.4)
+
+### O que foi feito
+
+- Criado `app/tests/test_inspections.py` com cobertura completa dos cenários de CRUD e Geo:
+  - Criação de inspeção com validação de retorno `InspectionOut` e relacionamento `inspector`.
+  - Proteção de endpoints (401 Unauthorized) para acessos sem token.
+  - Validação de RBAC na listagem: Inspetores veem apenas suas inspeções, Gestores veem todas.
+  - Validação de IDOR: Bloqueio de acesso (403 Forbidden) para inspetores tentando acessar inspeções alheias.
+  - Teste de fluxo de atualização de status.
+  - Teste de *soft delete*: Garantia de que a inspeção some da listagem mas permanece no banco com `deleted_at`.
+  - Teste de busca geoespacial `/geo/nearby`: Verificação de raio de busca (500m) e validação de limites (422 para raio > 5000m).
+- Atualizado `conftest.py` para incluir o banco de testes correto, suporte a `fakeredis` e fixtures `authed_client`/`manager_client`.
+- Corrigido o `inspection_service.py` para garantir o carregamento correto de relacionamentos (`selectinload`) e uso adequado de tipos PostGIS (`Geography`) em queries espaciais.
+- Ajustado o modelo `Inspection` para definir explicitamente os relacionamentos ORM com a tabela de usuários.
+
+### Estado dos arquivos tocados
+
+- `backend/app/tests/test_inspections.py` — 100% dos testes passando (10/10).
+- `backend/app/services/inspection_service.py` — refinado e corrigido.
+- `backend/app/models/inspection.py` — atualizado com relacionamentos.
+- `backend/app/tests/conftest.py` — fixtures atualizadas.
+- `PROGRESS.md` — Sprint 5 concluída com sucesso.
+
+### Validações que passaram
+
+- `pytest app/tests/test_inspections.py -v` -> 10/10 PASS.
+- Coordenadas reais de São Paulo utilizadas para garantir fidelidade aos cálculos do PostGIS.
+- Conversão transparente de WKB para Lat/Lon validada via API.
+
+### O que ficou pendente
+
+- Nada. Sprint 5 finalizada.
+
+### Próxima ação
+
+Sprint 6: Mídia — Implementação de upload/download MinIO e integração com inspeções.

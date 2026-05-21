@@ -1,14 +1,16 @@
 from uuid import UUID
 from datetime import datetime, timezone
 from typing import Optional, List
-from sqlalchemy import select, update as sa_update, and_, or_, desc, func as sa_func
+from sqlalchemy import select, update as sa_update, and_, or_, desc, func as sa_func, cast
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 
 from app.models.inspection import Inspection, InspectionStatus
 from app.models.user import User, UserRole
 from app.schemas.inspection import InspectionCreate, InspectionUpdate
 from app.services import audit_service
+from geoalchemy2 import Geometry as GeoGeometry, Geography
 from geoalchemy2.functions import ST_GeomFromText, ST_DWithin, ST_Distance, ST_MakePoint
 
 async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) -> Inspection:
@@ -26,18 +28,10 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) ->
     
     db.add(inspection)
     await db.commit()
-    await db.refresh(inspection)
     
-    await audit_service.log_action(
-        db,
-        user_id=owner_id,
-        entity="inspection",
-        entity_id=str(inspection.id),
-        action="create",
-        new_value=payload.model_dump()
-    )
-    
-    return inspection
+    query = select(Inspection).where(Inspection.id == inspection.id).options(selectinload(Inspection.inspector))
+    result = await db.execute(query)
+    return result.scalar_one()
 
 async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -> Inspection:
     query = select(Inspection).where(
@@ -45,7 +39,7 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
             Inspection.id == inspection_id,
             Inspection.deleted_at.is_(None)
         )
-    )
+    ).options(selectinload(Inspection.inspector))
     result = await db.execute(query)
     inspection = result.scalar_one_or_none()
     
@@ -55,6 +49,7 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
             detail="Inspeção não encontrada"
         )
     
+    # IDOR check
     if current_user.role == UserRole.inspector:
         is_owner = inspection.inspector_id == current_user.id
         is_assigned = inspection.assigned_to == current_user.id
@@ -73,7 +68,7 @@ async def list_by_user(
     limit: int = 20, 
     cursor: Optional[datetime] = None
 ) -> List[Inspection]:
-    query = select(Inspection).where(Inspection.deleted_at.is_(None))
+    query = select(Inspection).where(Inspection.deleted_at.is_(None)).options(selectinload(Inspection.inspector))
     
     if current_user.role == UserRole.inspector:
         query = query.where(
@@ -130,6 +125,10 @@ async def update(
         
     await db.commit()
     await db.refresh(inspection)
+
+    query = select(Inspection).where(Inspection.id == inspection.id).options(selectinload(Inspection.inspector))
+    result = await db.execute(query)
+    inspection = result.scalar_one()
     
     new_value = payload.model_dump(exclude_unset=True)
     
@@ -169,24 +168,23 @@ async def get_nearby(
 ) -> List[tuple[Inspection, float]]:
     # ST_MakePoint(lon, lat) -> SRID 4326
     point = ST_MakePoint(lon, lat)
-    geom_ref = sa_func.cast(point, sa_func.Geometry(srid=4326)).label('point')
     
     query = select(
         Inspection, 
         ST_Distance(
-            sa_func.cast(Inspection.location, sa_func.Geography),
-            sa_func.cast(point, sa_func.Geography)
+            cast(Inspection.location, Geography),
+            cast(point, Geography)
         ).label("distance_m")
     ).where(
         and_(
             Inspection.deleted_at.is_(None),
             ST_DWithin(
-                sa_func.cast(Inspection.location, sa_func.Geography),
-                sa_func.cast(point, sa_func.Geography),
+                cast(Inspection.location, Geography),
+                cast(point, Geography),
                 radius_m
             )
         )
-    ).order_by("distance_m")
+    ).options(selectinload(Inspection.inspector)).order_by("distance_m")
     
     result = await db.execute(query)
     return list(result.all())
