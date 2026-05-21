@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
@@ -12,9 +13,11 @@ from app.schemas.auth import TokenResponse
 from app.config import settings
 from app.services.token_service import create_access_token
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configuração explícita para Bcrypt
+pwd_context = PasswordHash((BcryptHasher(),))
 
 async def create_user(db: AsyncSession, payload: UserCreate) -> User:
+    # Verifica email duplicado
     query = select(User).where(User.email == payload.email)
     result = await db.execute(query)
     if result.scalars().first():
@@ -23,6 +26,7 @@ async def create_user(db: AsyncSession, payload: UserCreate) -> User:
             detail="Este e-mail já está cadastrado."
         )
 
+    # Hash da senha
     hashed_password = pwd_context.hash(payload.password)
     
     new_user = User(
@@ -54,6 +58,7 @@ async def login(db: AsyncSession, email: str, password: str, redis_client: Redis
             detail="Conta desativada. Entre em contato com o administrador."
         )
 
+    # Verifica bloqueio por tentativas falhas
     now = datetime.now(timezone.utc)
     if user.locked_until and user.locked_until > now:
         raise HTTPException(
@@ -61,7 +66,17 @@ async def login(db: AsyncSession, email: str, password: str, redis_client: Redis
             detail=f"Conta bloqueada temporariamente. Tente novamente após {user.locked_until.strftime('%H:%M:%S')}."
         )
 
-    if not pwd_context.verify(password, user.password):
+    # Verifica senha
+    try:
+        is_valid = pwd_context.verify(password, user.password)
+    except Exception:
+        # Captura erros de formato de hash ou internos do hasher
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Erro na validação de credenciais."
+        )
+
+    if not is_valid:
         user.failed_attempts += 1
         if user.failed_attempts >= 5:
             user.locked_until = now + timedelta(minutes=15)
@@ -72,17 +87,24 @@ async def login(db: AsyncSession, email: str, password: str, redis_client: Redis
             detail="Credenciais inválidas."
         )
 
+    # Captura valores ANTES do commit para evitar erros de lazy-loading em campos Enum
+    user_id_str = str(user.id)
+    user_role_val = user.role.value
+
+    # Sucesso no login
     user.failed_attempts = 0
     user.locked_until = None
     await db.commit()
 
-    access_token = create_access_token(data={"sub": str(user.id), "role": user.role.value})
+    # Gera Access Token usando os valores capturados
+    access_token = create_access_token(data={"sub": user_id_str, "role": user_role_val})
     
+    # Gera Refresh Token
     refresh_token = str(uuid.uuid4())
     redis_key = f"refresh:{refresh_token}"
     ttl = settings.REFRESH_TOKEN_TTL_DAYS * 86400
     
-    await redis_client.setex(redis_key, ttl, str(user.id))
+    await redis_client.setex(redis_key, ttl, user_id_str)
 
     return TokenResponse(
         access_token=access_token,
@@ -91,15 +113,16 @@ async def login(db: AsyncSession, email: str, password: str, redis_client: Redis
 
 async def refresh_token(refresh_token_str: str, redis_client: Redis, db: AsyncSession) -> TokenResponse:
     redis_key = f"refresh:{refresh_token_str}"
-    user_id = await redis_client.get(redis_key)
+    user_id_bytes = await redis_client.get(redis_key)
     
-    if not user_id:
+    if not user_id_bytes:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token de atualização inválido ou expirado."
         )
 
-    query = select(User).where(User.id == uuid.UUID(user_id.decode("utf-8")))
+    user_id_str = user_id_bytes.decode("utf-8")
+    query = select(User).where(User.id == uuid.UUID(user_id_str))
     result = await db.execute(query)
     user = result.scalars().first()
     
@@ -110,14 +133,18 @@ async def refresh_token(refresh_token_str: str, redis_client: Redis, db: AsyncSe
             detail="Usuário inválido ou inativo."
         )
 
-    new_access_token = create_access_token(data={"sub": str(user.id), "role": user.role.value})
+    # Captura valores antes do commit
+    current_user_id_str = str(user.id)
+    current_user_role_val = user.role.value
+
+    new_access_token = create_access_token(data={"sub": current_user_id_str, "role": current_user_role_val})
     
     new_refresh_token = str(uuid.uuid4())
     new_redis_key = f"refresh:{new_refresh_token}"
     ttl = settings.REFRESH_TOKEN_TTL_DAYS * 86400
     
     await redis_client.delete(redis_key)
-    await redis_client.setex(new_redis_key, ttl, str(user.id))
+    await redis_client.setex(new_redis_key, ttl, current_user_id_str)
 
     return TokenResponse(
         access_token=new_access_token,

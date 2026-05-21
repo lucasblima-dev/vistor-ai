@@ -10,7 +10,7 @@
 | 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
-| 4 | Autenticação (JWT, refresh, blacklist) | 🔄 Em andamento | 21/05/2026 |
+| 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
 | 5 | Inspeções CRUD + PostGIS | ⬜ Pendente | — |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
@@ -469,3 +469,77 @@ Task 4.2: Implementar lógica de segurança e JWT no backend.
 ### Próxima ação
 
 Task 4.3: Implementar router de autenticação e dependências de segurança.
+
+---
+
+## Task 13
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Router, Dependências e Auditoria (Task 4.3)
+
+### O que foi feito
+
+- Implementado `app/dependencies/db.py`: Dependências assíncronas para `get_db` (PostgreSQL) e `get_redis` (Redis).
+- Implementado `app/dependencies/auth.py`:
+  - `get_current_user`: Valida JWT, busca usuário no banco e verifica status.
+  - `require_role`: Decorador para controle de acesso baseado em papéis (RBAC).
+- Implementado `app/services/audit_service.py`: Serviço centralizado para registro de ações (`log_action`) com persistência em banco.
+- Implementado `app/routers/auth.py`:
+  - Endpoints de `login`, `refresh`, `logout` e `me`.
+  - Integração com logs de auditoria para login/logout.
+  - Uso de `Depends` para injeção de dependências e segurança.
+
+### Estado dos arquivos tocados
+
+- `backend/app/dependencies/db.py` — completo.
+- `backend/app/dependencies/auth.py` — completo.
+- `backend/app/services/audit_service.py` — completo.
+- `backend/app/routers/auth.py` — completo.
+- `PROGRESS.md` — Sprint 4 em fase avançada.
+
+### Validações que passaram
+
+- Estrutura de rotas segue o padrão REST.
+- Dependência de Redis configurada com fechamento automático de conexão.
+- Auditoria registra IP do cliente no login.
+
+### O que ficou pendente
+
+- Implementação do router de usuários (`routers/users.py`) para gestão de perfil e criação inicial de admin.
+
+### Próxima ação
+
+Task 4.4: Implementar gestão de usuários e registro inicial.
+
+---
+
+## Task 14
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Correção de Erro 500 no Login (Hotfix)
+
+### O que foi feito
+
+- Corrigido Erro 500 na rota de login:
+  - Migração de `passlib` para `pwdlib` concluída com configuração explícita de `BcryptHasher`.
+  - Adicionada captura de atributos do usuário (`id`, `role`) antes do `db.commit()` para evitar erros de `MissingGreenlet` ou expiração de objetos SQLAlchemy em contexto assíncrono.
+  - Implementada conversão explícita de strings UUID para objetos `uuid.UUID` no `audit_service.py`, garantindo compatibilidade com o modelo de dados.
+  - Adicionado bloco `try/except` na verificação de senha para capturar e tratar erros de formato de hash.
+- Refatoração dos serviços de autenticação para maior robustez no fluxo de tokens.
+
+### Estado dos arquivos tocados
+
+- `backend/app/services/auth_service.py` — corrigido e otimizado.
+- `backend/app/services/audit_service.py` — robustez para UUIDs adicionada.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Fluxo de login agora deve processar corretamente hashes Bcrypt (`$2b$`).
+- Atributos do usuário são preservados após a persistência no banco.
+
+### Próxima ação
+
+Task 4.5: Validar login via PowerShell e iniciar Sprint 5.
