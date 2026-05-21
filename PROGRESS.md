@@ -543,3 +543,44 @@ Task 4.4: Implementar gestão de usuários e registro inicial.
 ### Próxima ação
 
 Task 4.5: Validar login via PowerShell e iniciar Sprint 5.
+
+---
+
+## Task 15
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Testes Automatizados de Autenticação
+
+### O que foi feito
+
+- Implementado `backend/app/tests/conftest.py`:
+  - Configuração de banco de dados de teste isolado (`vistor_ai_test`) com suporte a PostGIS.
+  - Fixture `db_session` com limpeza automática de tabelas (`TRUNCATE`) entre os testes.
+  - Fixture `client` utilizando `ASGITransport` para testes assíncronos sem servidor real.
+  - Mock de Redis utilizando `fakeredis` para isolamento total.
+  - Fixtures `test_user`, `inspector_token` e `manager_token` para facilitar a escrita de testes.
+- Implementado `backend/app/tests/test_auth.py`:
+  - 11 casos de teste cobrindo:
+    - Login bem-sucedido e falhas por senha ou usuário inexistente.
+    - Bloqueio temporário de conta após 5 tentativas falhas.
+    - Validação de status de conta ativa/inativa.
+    - Rotação de Refresh Tokens.
+    - Logout e invalidação de sessão.
+    - Acesso ao perfil (`/me`) com tokens válidos, inválidos e ausentes.
+
+### Estado dos arquivos tocados
+
+- `backend/app/tests/conftest.py` — completo.
+- `backend/app/tests/test_auth.py` — completo (11/11 casos passando).
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Execução de `pytest` retornou 100% de sucesso nos 11 casos propostos.
+- Banco de teste é criado e destruído corretamente.
+- Rotação de tokens confirmada (refresh token muda a cada uso).
+
+### Próxima ação
+
+Sprint 5: Implementação do CRUD de Inspeções com integração PostGIS.
