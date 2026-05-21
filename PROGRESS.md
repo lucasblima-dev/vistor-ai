@@ -10,11 +10,13 @@
 | 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
-| 4 | Autenticação (JWT, refresh, blacklist) | ⬜ Pendente | — |
+| 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
 | 5 | Inspeções CRUD + PostGIS | ⬜ Pendente | — |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
+
+> Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
 
 ### Mobile
 
@@ -26,8 +28,6 @@
 | 12 | Mapa + Heatmap | ⬜ Pendente | — |
 | 13 | Laudos + Perfil + Offline | ⬜ Pendente | — |
 | 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — |
-
-> Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
 
 ---
 
@@ -386,3 +386,201 @@ Task 3.3: Gerar e aplicar a primeira migration para criar as tabelas no PostgreS
 ### Próxima ação
 
 Iniciar Sprint 4
+
+---
+
+## Task 11
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Schemas de Autenticação e Usuários (Task 4.1)
+
+### O que foi feito
+
+- Criado `app/schemas/auth.py` com schemas:
+  - `LoginRequest`: Validação de email e senha para login.
+  - `TokenResponse`: Estrutura de retorno de tokens JWT.
+  - `RefreshRequest`: Schema para renovação de access token.
+  - `UserOut`: Schema de saída para dados do usuário com `from_attributes=True` (Pydantic v2).
+- Criado `app/schemas/user.py` com schemas:
+  - `UserCreate`: Criação de usuário com validação de senha (min 8 chars) e role.
+  - `UserUpdate`: Atualização parcial de nome e email.
+- Utilizado `ConfigDict` para configurações do Pydantic v2.
+- Integrado `UserRole` Enum dos modelos para validação estrita no `UserCreate`.
+
+### Estado dos arquivos tocados
+
+- `backend/app/schemas/auth.py` — completo.
+- `backend/app/schemas/user.py` — completo.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Revisão dos tipos de dados e nomes de campos conforme `GEMINI.md`.
+- Garantia de que a senha em `UserCreate` possui `min_length=8`.
+
+### O que ficou pendente
+
+- Implementação do `auth_service.py` para lógica de login e geração de tokens.
+- Implementação dos endpoints de auth no router.
+
+### Próxima ação
+
+Task 4.2: Implementar lógica de segurança e JWT no backend.
+
+---
+
+## Task 12
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Serviços de Autenticação e JWT (Task 4.2)
+
+### O que foi feito
+
+- Implementado `app/services/token_service.py`:
+  - `create_access_token`: Geração de JWT com tempo de expiração configurável.
+  - `decode_access_token`: Decodificação e validação de tokens JWT.
+- Implementado `app/services/auth_service.py`:
+  - `create_user`: Cadastro com hash de senha (bcrypt 12 rounds) e bloqueio de email duplicado.
+  - `login`: Autenticação com verificação de status ativo, controle de tentativas falhas (bloqueio de 15 min após 5 falhas) e geração de tokens.
+  - `refresh_token`: Rotação de refresh tokens armazenados no Redis para segurança máxima.
+  - `logout`: Invalidação de refresh tokens no Redis (idempotente).
+- Mensagens de erro de negócio padronizadas em português via `HTTPException`.
+- Utilizado `AsyncSession` (SQLAlchemy) e `Redis` (asyncio) para operações não bloqueantes.
+
+### Estado dos arquivos tocados
+
+- `backend/app/services/token_service.py` — completo.
+- `backend/app/services/auth_service.py` — completo.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Lógica de hash de senha segue padrões de segurança (rounds=12).
+- TTL de tokens respeita configurações do `app/config.py`.
+- Fluxo de rotação de refresh token deleta o token antigo.
+
+### O que ficou pendente
+
+- Implementação dos endpoints em `routers/auth.py`.
+- Implementação das dependências `get_current_user` e `require_role`.
+
+### Próxima ação
+
+Task 4.3: Implementar router de autenticação e dependências de segurança.
+
+---
+
+## Task 13
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Router, Dependências e Auditoria (Task 4.3)
+
+### O que foi feito
+
+- Implementado `app/dependencies/db.py`: Dependências assíncronas para `get_db` (PostgreSQL) e `get_redis` (Redis).
+- Implementado `app/dependencies/auth.py`:
+  - `get_current_user`: Valida JWT, busca usuário no banco e verifica status.
+  - `require_role`: Decorador para controle de acesso baseado em papéis (RBAC).
+- Implementado `app/services/audit_service.py`: Serviço centralizado para registro de ações (`log_action`) com persistência em banco.
+- Implementado `app/routers/auth.py`:
+  - Endpoints de `login`, `refresh`, `logout` e `me`.
+  - Integração com logs de auditoria para login/logout.
+  - Uso de `Depends` para injeção de dependências e segurança.
+
+### Estado dos arquivos tocados
+
+- `backend/app/dependencies/db.py` — completo.
+- `backend/app/dependencies/auth.py` — completo.
+- `backend/app/services/audit_service.py` — completo.
+- `backend/app/routers/auth.py` — completo.
+- `PROGRESS.md` — Sprint 4 em fase avançada.
+
+### Validações que passaram
+
+- Estrutura de rotas segue o padrão REST.
+- Dependência de Redis configurada com fechamento automático de conexão.
+- Auditoria registra IP do cliente no login.
+
+### O que ficou pendente
+
+- Implementação do router de usuários (`routers/users.py`) para gestão de perfil e criação inicial de admin.
+
+### Próxima ação
+
+Task 4.4: Implementar gestão de usuários e registro inicial.
+
+---
+
+## Task 14
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Correção de Erro 500 no Login (Hotfix)
+
+### O que foi feito
+
+- Corrigido Erro 500 na rota de login:
+  - Migração de `passlib` para `pwdlib` concluída com configuração explícita de `BcryptHasher`.
+  - Adicionada captura de atributos do usuário (`id`, `role`) antes do `db.commit()` para evitar erros de `MissingGreenlet` ou expiração de objetos SQLAlchemy em contexto assíncrono.
+  - Implementada conversão explícita de strings UUID para objetos `uuid.UUID` no `audit_service.py`, garantindo compatibilidade com o modelo de dados.
+  - Adicionado bloco `try/except` na verificação de senha para capturar e tratar erros de formato de hash.
+- Refatoração dos serviços de autenticação para maior robustez no fluxo de tokens.
+
+### Estado dos arquivos tocados
+
+- `backend/app/services/auth_service.py` — corrigido e otimizado.
+- `backend/app/services/audit_service.py` — robustez para UUIDs adicionada.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Fluxo de login agora deve processar corretamente hashes Bcrypt (`$2b$`).
+- Atributos do usuário são preservados após a persistência no banco.
+
+### Próxima ação
+
+Task 4.5: Validar login via PowerShell e iniciar Sprint 5.
+
+---
+
+## Task 15
+
+**Data:** 21/05/2026
+**Sprint:** 4 - Autenticação
+**Sessão:** Testes Automatizados de Autenticação
+
+### O que foi feito
+
+- Implementado `backend/app/tests/conftest.py`:
+  - Configuração de banco de dados de teste isolado (`vistor_ai_test`) com suporte a PostGIS.
+  - Fixture `db_session` com limpeza automática de tabelas (`TRUNCATE`) entre os testes.
+  - Fixture `client` utilizando `ASGITransport` para testes assíncronos sem servidor real.
+  - Mock de Redis utilizando `fakeredis` para isolamento total.
+  - Fixtures `test_user`, `inspector_token` e `manager_token` para facilitar a escrita de testes.
+- Implementado `backend/app/tests/test_auth.py`:
+  - 11 casos de teste cobrindo:
+    - Login bem-sucedido e falhas por senha ou usuário inexistente.
+    - Bloqueio temporário de conta após 5 tentativas falhas.
+    - Validação de status de conta ativa/inativa.
+    - Rotação de Refresh Tokens.
+    - Logout e invalidação de sessão.
+    - Acesso ao perfil (`/me`) com tokens válidos, inválidos e ausentes.
+
+### Estado dos arquivos tocados
+
+- `backend/app/tests/conftest.py` — completo.
+- `backend/app/tests/test_auth.py` — completo (11/11 casos passando).
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Execução de `pytest` retornou 100% de sucesso nos 11 casos propostos.
+- Banco de teste é criado e destruído corretamente.
+- Rotação de tokens confirmada (refresh token muda a cada uso).
+
+### Próxima ação
+
+Sprint 5: Implementação do CRUD de Inspeções com integração PostGIS.
