@@ -11,7 +11,7 @@
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
 | 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
-| 5 | Inspeções CRUD + PostGIS | ⬜ Pendente | — |
+| 5 | Inspeções CRUD + PostGIS | ✅ Concluído | 21/05/2026 |
 | 6 | Mídia — upload/download MinIO | ⬜ Pendente | — |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
@@ -584,3 +584,164 @@ Task 4.5: Validar login via PowerShell e iniciar Sprint 5.
 ### Próxima ação
 
 Sprint 5: Implementação do CRUD de Inspeções com integração PostGIS.
+
+---
+
+## Task 16
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Schemas de Inspeção (Task 5.1)
+
+### O que foi feito
+
+- Preenchido o `app/schemas/inspection.py` com as definições Pydantic v2.
+- Implementado schema `LocationPoint` para expor a localização como latitude e longitude.
+- Desenvolvido decodificador de WKB em `LocationPoint.parse_wkb` e `field_validator` para converter os bytes do PostGIS/GeoAlchemy2 de forma transparente, garantindo que nenhum WKB/WKT seja exposto na API.
+- Adicionado `InspectionCreate` com validações de limites geográficos (`lat` entre -90/90, `lon` entre -180/180).
+- Adicionado `InspectionUpdate` para modificações parciais (status, descrição, assigned_to, human_label).
+- Adicionado `InspectionOut` contendo os dados do modelo, convertendo location e validando relacionamento `inspector: UserOut`.
+
+### Estado dos arquivos tocados
+
+- `backend/app/schemas/inspection.py` — completo.
+- `backend/app/schemas/user.py` — atualizado com inclusão de `UserOut`.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Restrição para evitar a exposição do WKB foi tratada de forma correta e sem utilizar dependências desnecessárias (conversão raw de bytes com struct).
+- Modelos estão usando Pydantic v2 com `model_config = ConfigDict(from_attributes=True)`.
+
+### O que ficou pendente
+
+- Implementação do Service (CRUD) das inspeções (`app/services/inspection_service.py`) e do router correspondente.
+
+### Próxima ação
+
+Task 5.2: Implementar o Service de Inspeções, lidando com lógica do PostGIS e regras de negócio.
+
+---
+
+## Task 17
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Service de Inspeções (Task 5.2)
+
+### O que foi feito
+
+- Implementado `app/services/inspection_service.py` com suporte completo a CRUD.
+- Integrada lógica PostGIS (`ST_GeomFromText`, `ST_DWithin`, `ST_Distance`) para manipulação de coordenadas e busca por proximidade.
+- Implementado controle de acesso (IDOR check) em `get_by_id`, garantindo que inspetores só acessem suas próprias inspeções ou as atribuídas a eles.
+- Adicionada paginação baseada em cursor (`created_at`) e filtros por papel (RBAC) na listagem.
+- Validada transição de status em `update` (bloqueio de reabertura direta de inspeções resolvidas).
+- Implementado *soft delete* garantindo que registros nunca sejam removidos fisicamente do banco.
+- Adicionado registro automático de logs de auditoria (`audit_service.log_action`) para todas as operações de escrita (create, update, delete).
+
+### Estado dos arquivos tocados
+
+- `backend/app/services/inspection_service.py` — completo e funcional.
+- `PROGRESS.md` — atualizado.
+
+### Validações que passaram
+
+- Lógica de negócio isolada no Service conforme os princípios invioláveis da arquitetura.
+- Uso correto de casts para `Geography` no PostGIS para garantir precisão em metros nas buscas espaciais.
+- Conformidade com as regras de IDOR e RBAC descritas no `GEMINI.md`.
+
+### O que ficou pendente
+
+- Implementação dos routers (`app/routers/inspections.py` e `app/routers/geo.py`) para expor essas funcionalidades via API.
+
+### Próxima ação
+
+Task 5.3: Implementar os routers de inspeção e geoespacial.
+
+---
+
+## Task 18
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Routers de Inspeção e Geoespacial (Task 5.3)
+
+### O que foi feito
+
+- Implementado `app/routers/inspections.py`:
+  - `POST /`: Criação de inspeção vinculada ao usuário autenticado (201 Created).
+  - `GET /`: Listagem paginada com suporte a filtros de status e cursor.
+  - `GET /{id}`: Detalhe de inspeção com validação de propriedade/atribuição.
+  - `PATCH /{id}`: Atualização parcial de dados.
+  - `DELETE /{id}`: Remoção lógica (204 No Content).
+- Implementado `app/routers/geo.py`:
+  - `GET /nearby`: Busca geoespacial com validação de limites (lat/lon) e raio (50m - 5000m).
+  - `GET /export`: Exportação de dados em formatos GeoJSON e CSV com filtros opcionais, utilizando `StreamingResponse`.
+- Criado `app/services/geo_service.py` para lidar com a lógica de geração de arquivos para exportação (CSV/GeoJSON).
+- Adicionado schema `InspectionNearby` em `app/schemas/inspection.py` para incluir a distância nos resultados de proximidade.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/inspections.py` — completo.
+- `backend/app/routers/geo.py` — completo.
+- `backend/app/services/geo_service.py` — criado e funcional.
+- `backend/app/schemas/inspection.py` — atualizado.
+- `PROGRESS.md` — Sprint 5 finalizada.
+
+### Validações que passaram
+
+- Todos os endpoints possuem autenticação obrigatória via `Depends(get_current_user)`.
+- Routers seguem o padrão de delegar lógica aos services, mantendo-se puramente declarativos.
+- Validações de entrada (`Query` parameters) garantem integridade dos dados geográficos.
+
+### O que ficou pendente
+
+- Finalizar o `app/tests/test_inspections.py` com cobertura completa dos cenários de CRUD e Geolocalização.
+
+### Próxima ação
+
+Task 5.4: Testes de integração das Inspeções
+
+---
+
+## Task 19
+
+**Data:** 21/05/2026
+**Sprint:** 5 - Inspeções CRUD + PostGIS
+**Sessão:** Testes de Integração de Inspeções (Task 5.4)
+
+### O que foi feito
+
+- Criado `app/tests/test_inspections.py` com cobertura completa dos cenários de CRUD e Geo:
+  - Criação de inspeção com validação de retorno `InspectionOut` e relacionamento `inspector`.
+  - Proteção de endpoints (401 Unauthorized) para acessos sem token.
+  - Validação de RBAC na listagem: Inspetores veem apenas suas inspeções, Gestores veem todas.
+  - Validação de IDOR: Bloqueio de acesso (403 Forbidden) para inspetores tentando acessar inspeções alheias.
+  - Teste de fluxo de atualização de status.
+  - Teste de *soft delete*: Garantia de que a inspeção some da listagem mas permanece no banco com `deleted_at`.
+  - Teste de busca geoespacial `/geo/nearby`: Verificação de raio de busca (500m) e validação de limites (422 para raio > 5000m).
+- Atualizado `conftest.py` para incluir o banco de testes correto, suporte a `fakeredis` e fixtures `authed_client`/`manager_client`.
+- Corrigido o `inspection_service.py` para garantir o carregamento correto de relacionamentos (`selectinload`) e uso adequado de tipos PostGIS (`Geography`) em queries espaciais.
+- Ajustado o modelo `Inspection` para definir explicitamente os relacionamentos ORM com a tabela de usuários.
+
+### Estado dos arquivos tocados
+
+- `backend/app/tests/test_inspections.py` — 100% dos testes passando (10/10).
+- `backend/app/services/inspection_service.py` — refinado e corrigido.
+- `backend/app/models/inspection.py` — atualizado com relacionamentos.
+- `backend/app/tests/conftest.py` — fixtures atualizadas.
+- `PROGRESS.md` — Sprint 5 concluída com sucesso.
+
+### Validações que passaram
+
+- `pytest app/tests/test_inspections.py -v` -> 10/10 PASS.
+- Coordenadas reais de São Paulo utilizadas para garantir fidelidade aos cálculos do PostGIS.
+- Conversão transparente de WKB para Lat/Lon validada via API.
+
+### O que ficou pendente
+
+- Nada. Sprint 5 finalizada.
+
+### Próxima ação
+
+Sprint 6: Mídia — Implementação de upload/download MinIO e integração com inspeções.

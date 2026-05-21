@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Float, Text, DateTime, Enum, ForeignKey, text, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 from app.database import Base
 import enum
@@ -37,3 +38,6 @@ class Inspection(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    inspector = relationship("User", foreign_keys=[inspector_id])
+    assigned = relationship("User", foreign_keys=[assigned_to])
