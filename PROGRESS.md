@@ -1,5 +1,8 @@
 # Vistor AI — Progress
 
+Arquivo de atualização de todo o desenvolvimento do **Vistor AI**. Esse documento
+foca exclusivamente no `backend`. Para visualizar o `mobile`, acesse o [`./PROGRESS_MOBILE.md`](./PROGRESS_MOBILE.md).
+
 ---
 
 ## Status das Sprints
@@ -7,7 +10,7 @@
 | Sprint | Descrição | Status | Concluída em |
 |---|---|---|---|
 | 0 | Arquivos base (gitignore, env, docs, estrutura) | ✅ Concluído | 27/04/2026 |
-| 1 | Docker Compose + Dependências (Task 1.1 a 1.3) | ✅ Concluído | 05/05/2026 |
+| 1 | Docker Compose + Dependências | ✅ Concluído | 05/05/2026 |
 | 2 | FastAPI esqueleto + health endpoint | ✅ Concluído | 05/05/2026 |
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
 | 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
@@ -16,18 +19,25 @@
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
 
+## Checklist antes do Mobile
+
+| Status | Demandas |
+|----|----|
+| [✅] | docker compose up -d → todos os serviços healthy |
+| [✅] | GET /health → {"status":"ok","db":"connected"} |
+| [✅] | alembic upgrade head → sem erro |
+| [✅] | 5 tabelas + índice GIST confirmados no banco |
+| [✅] | POST /auth/login → retorna tokens |
+| [✅] | POST /inspections/ → cria com coordenadas GPS |
+| [✅] | GET /geo/nearby → retorna inspeções no raio |
+| [🔄] | POST /media/presign → retorna URL de upload |
+| [🔄] | POST /reports/generate → gera PDF |
+| [⬜] | pytest --cov=app → cobertura >= 70% |
+| [⬜] | git tag v0.1.0-backend existe |
+| [⬜] | PROGRESS.md atualizado |
+| [⬜] | Nenhum TODO crítico no código |
+
 > Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
-
-### Mobile
-
-| Sprint | Descrição | Status | Concluída em |
-|---|---|---|---|
-| 9 | Fundação Flutter (tema, router, api client) | ⬜ Pendente | — |
-| 10 | Auth + Home + Nova Inspeção | ⬜ Pendente | — |
-| 11 | Detalhe de Inspeção + Gerar Laudo | ⬜ Pendente | — |
-| 12 | Mapa + Heatmap | ⬜ Pendente | — |
-| 13 | Laudos + Perfil + Offline | ⬜ Pendente | — |
-| 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — |
 
 ---
 
@@ -73,7 +83,7 @@ completa de `backend/`. Depois abrir sessão da Sprint 1 para o `docker-compose.
 
 **Data:** 29/04/2026
 **Sprint:** 1 - Docker Compose + Dependências
-**Sessão:** Configuração da Infraestrutura
+**Sessão:** Configuração da Infraestrutura (Task 1.1)
 
 ### O que foi feito
 
@@ -170,7 +180,7 @@ Sprint 2: Criação do esqueleto FastAPI e endpoint de health check.
 
 **Data:** 05/05/2026
 **Sprint:** 2 - FastAPI esqueleto + health endpoint
-**Sessão:** Configuração e Conexão com Banco de Dados
+**Sessão:** Configuração e Conexão com Banco de Dados (Task 2.1)
 
 ### O que foi feito
 
@@ -204,7 +214,7 @@ Finalizar a Sprint 2 com a implementação do `main.py` e validação do health 
 
 **Data:** 05/05/2026
 **Sprint:** 2 - FastAPI esqueleto + health endpoint
-**Sessão:** Esqueleto FastAPI e Routers
+**Sessão:** Esqueleto FastAPI e Routers (Task 2.2)
 
 ### O que foi feito
 
@@ -237,7 +247,7 @@ Iniciar Sprint 3: Definição dos Models SQLAlchemy e Migrations Alembic.
 
 **Data:** 05/05/2026
 **Sprint:** 2 - FastAPI esqueleto + health endpoint
-**Sessão:** Ajustes de Build e Configuração
+**Sessão:** Ajustes de Build e Configuração (Task 2.3)
 
 ### O que foi feito
 
