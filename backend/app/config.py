@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     MINIO_ENDPOINT: str
     MINIO_USER: str
     MINIO_PASSWORD: str
+
+    @field_validator("MINIO_ENDPOINT")
+    @classmethod
+    def validate_minio_endpoint(cls, v: str) -> str:
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("MINIO_ENDPOINT deve iniciar com http:// ou https://")
+        return v
 
     REDIS_URL: str
 

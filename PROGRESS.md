@@ -15,7 +15,7 @@ foca exclusivamente no `backend`. Para visualizar o `mobile`, acesse o [`./PROGR
 | 3 | Models SQLAlchemy + Migrations Alembic | ✅ Concluído | 08/05/2026 |
 | 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
 | 5 | Inspeções CRUD + PostGIS | ✅ Concluído | 22/05/2026 |
-| 6 | Mídia — upload/download MinIO | 🔄 Em andamento | 22/05/2026 |
+| 6 | Mídia — upload/download MinIO | ✅ Concluído | 22/05/2026 |
 | 7 | IA (HuggingFace) + PDF (WeasyPrint) | ⬜ Pendente | — |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
 
@@ -30,12 +30,12 @@ foca exclusivamente no `backend`. Para visualizar o `mobile`, acesse o [`./PROGR
 | [✅] | POST /auth/login → retorna tokens |
 | [✅] | POST /inspections/ → cria com coordenadas GPS |
 | [✅] | GET /geo/nearby → retorna inspeções no raio |
-| [🔄] | POST /media/presign → retorna URL de upload |
+| [✅] | POST /media/presign → retorna URL de upload |
 | [🔄] | POST /reports/generate → gera PDF |
 | [⬜] | pytest --cov=app → cobertura >= 70% |
 | [⬜] | git tag v0.1.0-backend existe |
-| [⬜] | PROGRESS.md atualizado |
-| [⬜] | Nenhum TODO crítico no código |
+| [✅] | PROGRESS.md atualizado |
+| [✅] | Nenhum TODO crítico no código |
 
 > Legenda: ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ⚠️ Bloqueado
 
@@ -795,3 +795,48 @@ Sprint 6: Mídia — Implementação de upload/download MinIO e integração com
 ### Próxima ação
 
 Task 6.2: Implementar o router de mídias e lógica de presign URLs.
+
+---
+
+## Task 21
+
+**Data:** 22/05/2026
+**Sprint:** 6 - Mídia — upload/download MinIO
+**Sessão:** Router de Mídias e Background Tasks (Task 6.2)
+
+### O que foi feito
+
+- Criado `app/schemas/media.py` com suporte a Pydantic v2 para respostas de mídias e presigned URLs.
+- Implementado `app/routers/media.py`:
+  - `POST /media/presign`: Gera URL de upload com validação rigorosa de MIME type (`python-magic`) e tamanho (20MB fotos / 100MB vídeos).
+  - `POST /media/{id}/confirm`: Confirma o upload e dispara tarefas em background.
+  - `GET /media/{id}/url`: Gera URL temporária de download (1h) com validação de IDOR.
+- Desenvolvido processamento em background `process_media_upload`:
+  - Verificação de integridade do arquivo pós-upload usando `python-magic`.
+  - Geração automática de thumbnails para imagens.
+- Corrigido erro de startup no Docker:
+  - Adicionada validação de protocolo (`http://` ou `https://`) para `MINIO_ENDPOINT` no `app/config.py`.
+  - Atualizado `.env.example` com o formato de endpoint correto.
+
+### Estado dos arquivos tocados
+
+- `backend/app/schemas/media.py` — completo.
+- `backend/app/routers/media.py` — completo e funcional.
+- `backend/app/models/media.py` — atualizado com campo `status`.
+- `backend/app/config.py` — validadores adicionados.
+- `.env.example` — atualizado.
+- `PROGRESS.md` — Sprint 6 concluída.
+
+### Validações que passaram
+
+- Validação de MIME type baseada no conteúdo do arquivo (magic bytes).
+- Fluxo de presign -> upload -> confirm validado via curl.
+- Startup da aplicação no Docker estabilizado após correção do endpoint.
+
+### O que ficou pendente
+
+- Nada referente a Sprint 6.
+
+### Próxima ação
+
+Sprint 7: IA (HuggingFace) + PDF (WeasyPrint)
