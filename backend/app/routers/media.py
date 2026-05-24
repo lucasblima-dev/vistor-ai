@@ -100,8 +100,8 @@ async def confirm_upload(
     return media
 
 async def process_media_upload(media_id: str):
-    from app.database import async_session_maker
-    async with async_session_maker() as db:
+    from app.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as db:
         query = select(Media).where(Media.id == media_id)
         result = await db.execute(query)
         media = result.scalar_one_or_none()

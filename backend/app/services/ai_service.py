@@ -21,16 +21,32 @@ async def _classify_local_fallback(image_bytes: bytes) -> dict:
     }
 
 async def classify_image(image_bytes: bytes) -> dict:
-    url = f"https://api-inference.huggingface.co/models/{settings.HF_MODEL_ID}"
-    headers = {"Authorization": f"Bearer {settings.HF_API_KEY}"}
+    # A URL para o novo router deve terminar com o ID do modelo sem barra adicional se já estiver no path
+    url = f"https://router.huggingface.co/hf-inference/models/{settings.HF_MODEL_ID}"
+    
+    # Headers obrigatórios para o novo sistema de roteamento
+    headers = {
+        "Authorization": f"Bearer {settings.HF_API_KEY}",
+        "Content-Type": "image/jpeg",  # Força o tipo de conteúdo para imagens
+        "x-wait-for-model": "true"      # Instrução para o router esperar o carregamento do modelo
+    }
     
     try:
         async with httpx.AsyncClient(timeout=settings.HF_TIMEOUT_SECONDS) as client:
             response = await client.post(url, headers=headers, content=image_bytes)
+            
+            # Se retornar 503, o modelo ainda está carregando
+            if response.status_code == 503:
+                logger.warning("HuggingFace model is loading (503). Using fallback.")
+                return await _classify_local_fallback(image_bytes)
+                
             response.raise_for_status()
             
             result = response.json()
+            
+            # O modelo ViT retorna uma lista de dicionários [{"label": "...", "score": ...}, ...]
             if isinstance(result, list) and len(result) > 0:
+                # Pegamos o resultado com maior score
                 best_match = max(result, key=lambda x: x.get("score", 0.0))
                 return {
                     "label": best_match.get("label", "unknown"),
@@ -38,13 +54,10 @@ async def classify_image(image_bytes: bytes) -> dict:
                     "raw": result,
                     "source": "huggingface"
                 }
-            else:
-                return {
-                    "label": "unknown",
-                    "score": 0.0,
-                    "raw": result,
-                    "source": "huggingface"
-                }
+            
+            logger.error(f"Unexpected HF response format: {result}")
+            return await _classify_local_fallback(image_bytes)
+            
     except Exception as e:
         logger.error(f"Error calling HuggingFace API: {e}")
         return await _classify_local_fallback(image_bytes)

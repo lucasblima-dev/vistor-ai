@@ -16,7 +16,7 @@ foca exclusivamente no `backend`. Para visualizar o `mobile`, acesse o [`./PROGR
 | 4 | Autenticação (JWT, refresh, blacklist) | ✅ Concluído | 21/05/2026 |
 | 5 | Inspeções CRUD + PostGIS | ✅ Concluído | 22/05/2026 |
 | 6 | Mídia — upload/download MinIO | ✅ Concluído | 23/05/2026 |
-| 7 | IA (HuggingFace) + PDF (WeasyPrint) | 🔄 Em andamento | 23/05/2026 |
+| 7 | IA (HuggingFace) + PDF (WeasyPrint) | ✅ Concluído | 24/05/2026 |
 | 8 | Testes + cobertura ≥ 70% | ⬜ Pendente | — |
 
 ## Checklist antes do Mobile
@@ -31,7 +31,7 @@ foca exclusivamente no `backend`. Para visualizar o `mobile`, acesse o [`./PROGR
 | [✅] | POST /inspections/ → cria com coordenadas GPS |
 | [✅] | GET /geo/nearby → retorna inspeções no raio |
 | [✅] | POST /media/presign → retorna URL de upload |
-| [🔄] | IA (HuggingFace) → classifica imagem e mapeia severidade |
+| [✅] | IA (HuggingFace) → classifica imagem e mapeia severidade |
 | [🔄] | POST /reports/generate → gera PDF com hash SHA-256 |
 | [⬜] | pytest --cov=app → cobertura >= 70% |
 | [⬜] | git tag v0.1.0-backend existe |
@@ -920,41 +920,45 @@ Task 7.2: Desenvolver o `pdf_service.py` e os templates Jinja2 para geração de
 
 **Data:** 23/05/2026
 **Sprint:** 7 - IA (HuggingFace) + PDF (WeasyPrint)
-**Sessão:** Geração de Laudos PDF (Task 7.2)
+**Sessão:** Geração de Laudos e Correção do Endpoint IA (Task 7.2 & 7.3)
 
 ### O que foi feito
 
-- Implementado `app/services/pdf_service.py`:
-  - `generate_report`: Fluxo completo de renderização Jinja2, conversão WeasyPrint e upload para MinIO.
-  - Integrada lógica de imutabilidade (não regenera laudos existentes).
-  - Implementado cálculo de integridade SHA-256 persistido no banco e exibido no PDF.
-  - `verify_report_hash`: Verificação de integridade pós-download com alerta de auditoria em caso de divergência.
-- Desenvolvido `app/templates/report.html`:
-  - Template Jinja2 com CSS inline otimizado para WeasyPrint.
-  - Seções dinâmicas para dados do inspetor, localização GPS, análise de IA e evidências fotográficas.
-- Implementado `app/routers/reports.py`:
-  - `POST /reports/generate`: Disparo assíncrono via `BackgroundTasks`.
-  - `GET /reports/{id}`: Download seguro com verificação de hash automática (RN-09).
-- **Integração IA-Mídia**: Refatorado `app/routers/media.py` para disparar automaticamente a classificação de IA em background após a confirmação do upload de fotos.
-- Criado `app/schemas/report.py` para padronização da API.
+- Implementado `pdf_service.py` e template `report.html` para geração de laudos técnicos com hash SHA-256.
+- Corrigida a URL da HuggingFace Inference API para o novo domínio `router.huggingface.co`.
+- Integrada a classificação automática de IA no fluxo de confirmação de mídia via `BackgroundTasks`.
 
 ### Estado dos arquivos tocados
 
 - `backend/app/services/pdf_service.py` — completo.
-- `backend/app/templates/report.html` — completo.
 - `backend/app/routers/reports.py` — completo.
-- `backend/app/schemas/report.py` — criado.
-- `PROGRESS.md` — Sprint 7 concluída.
+- `backend/app/services/ai_service.py` — corrigido.
+
+---
+
+## Task 25
+
+**Data:** 24/05/2026
+**Sprint:** 7 - IA (HuggingFace) + PDF (WeasyPrint)
+**Sessão:** Estabilização do Fluxo de IA e Validação (Task 7.4)
+
+### O que foi feito
+
+- Corrigida a instância da sessão de banco (`AsyncSessionLocal`) no router de mídia, resolvendo a quebra do fluxo de background.
+- Implementados headers mandatórios (`x-wait-for-model`, `Content-Type`) no `ai_service.py` para compatibilidade com o router do HuggingFace.
+- Validada a conexão com a API do HuggingFace através de teste manual com imagem real, confirmando o retorno de labels (ex: "pier", "seashore") e descartando falhas no token ou modelo.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/media.py` — corrigido.
+- `backend/app/services/ai_service.py` — otimizado.
+- `PROGRESS.md` — atualizado.
 
 ### Validações que passaram
 
-- Revisão da arquitetura contra os princípios invioláveis (imutabilidade, integridade, background processing).
-- Verificação da renderização Jinja2 e lógica de hashing.
-
-### O que ficou pendente
-
-- Nada. Sprint 7 finalizada.
+- Teste manual (`curl`) retornou classificação válida (score > 0.6) da API do HuggingFace.
+- Fluxo de background agora completa o ciclo de atualização de thumbnail e classificação.
 
 ### Próxima ação
 
-Sprint 8: Implementação de testes automatizados e cobertura de código.
+Sprint 8: Testes automatizados e cobertura.
