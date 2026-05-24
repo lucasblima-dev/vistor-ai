@@ -48,18 +48,24 @@ async def _get_media_urls(db: AsyncSession, inspection_id: uuid.UUID) -> List[st
 async def generate_report(inspection_id: uuid.UUID, db: AsyncSession, generated_by: uuid.UUID) -> Tuple[str, str]:
     """Gera um laudo PDF para a inspeção."""
     try:
+        # Busca a inspeção garantindo que o inspetor seja carregado na mesma query
         query = select(Inspection).where(
             Inspection.id == inspection_id
         ).options(
             selectinload(Inspection.inspector)
         )
-        inspection = await db.scalar(query)
+        result = await db.execute(query)
+        inspection = result.scalar_one_or_none()
         
         if not inspection:
+            logger.error(f"Inspeção {inspection_id} não encontrada para geração de laudo")
             raise ValueError(f"Inspeção {inspection_id} não encontrada")
 
+        # Verifica se o relatório já existe (idempotência)
         existing_report_query = select(Report).where(Report.inspection_id == inspection_id)
-        existing_report = await db.scalar(existing_report_query)
+        existing_result = await db.execute(existing_report_query)
+        existing_report = existing_result.scalar_one_or_none()
+        
         if existing_report:
             logger.info(f"Relatório já existe para a inspeção {inspection_id}")
             return existing_report.minio_key, existing_report.sha256
@@ -67,7 +73,7 @@ async def generate_report(inspection_id: uuid.UUID, db: AsyncSession, generated_
         media_urls = await _get_media_urls(db, inspection_id)
         
         # localização para Lat/Lon
-        loc = LocationPoint.from_wkb(inspection.location)
+        loc = LocationPoint.parse_wkb(inspection.location)
 
         template = env.get_template("report.html")
         html_str = template.render(

@@ -11,6 +11,12 @@ from app.schemas.report import ReportCreate, ReportOut
 
 router = APIRouter()
 
+async def generate_report_wrapper(inspection_id: UUID, generated_by: UUID):
+    """Wrapper para garantir que a tarefa de background tenha sua própria sessão de banco."""
+    from app.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as db:
+        await pdf_service.generate_report(inspection_id, db, generated_by)
+
 @router.post("/generate", status_code=status.HTTP_202_ACCEPTED)
 async def generate_report_task(
     payload: ReportCreate,
@@ -26,12 +32,11 @@ async def generate_report_task(
     if report:
         return {"report_id": report.id, "status": "exists", "message": "Relatório já gerado anteriormente."}
 
-    # Adiciona a tarefa em background
+    # Adiciona a tarefa em background usando o wrapper
     background_tasks.add_task(
-        pdf_service.generate_report,
-        inspection_id=payload.inspection_id,
-        db=db,
-        generated_by=user.id
+        generate_report_wrapper,
+        payload.inspection_id,
+        user.id
     )
     
     return {"status": "generating", "message": "O laudo está sendo processado."}
