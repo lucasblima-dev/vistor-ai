@@ -21,6 +21,7 @@ dist/
 backend/seed_user.py 
 backend/test_ai.py
 backend/workflow.md
+backend/test_pdf.py
 
 # Alembic
 alembic/versions/*.pyc
