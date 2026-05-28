@@ -1,6 +1,7 @@
 # Módulo: Backend (FastAPI)
 
 > Contexto técnico específico do backend.
+
 > Complementa o GEMINI.md raiz com convenções de código Python/FastAPI.
 
 ---

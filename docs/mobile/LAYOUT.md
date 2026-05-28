@@ -1,9 +1,13 @@
 # Vistor AI — Design System Completo para Flutter
 
-> **Fonte de verdade de UI/UX extraída das telas reais (PDF v1).**
+> **Fonte de verdade de UI/UX extraída das telas reais.**
+
 > O agente deve consultar este arquivo antes de gerar qualquer widget, tela ou tema.
+
 > Nunca invente valores de cor, espaçamento ou fonte — use exclusivamente os tokens definidos aqui.
+
 > Este documento cobre as 12 telas confirmadas: Splash/Loading, Login, Home, Mapa, Laudos, Perfil,
+
 > Gestão de Equipe, Exportar Dados, Gestão de Usuários, Nova Inspeção, Detalhe de Inspeção, Offline.
 
 ---
@@ -31,7 +35,7 @@
 
 ### 1.2 Gradiente — Splash, Splash Header, Botões Premium
 
-Observado nas telas de Loading (8.11) e fundo do header da Home e Gestão:
+Observado nas telas de Loading e fundo do header da Home e Gestão:
 
 ```dart
 // Gradiente azul-violeta premium
@@ -251,7 +255,8 @@ class AppShadows {
 
 ## 4. Logo do App (Componente Dinâmico)
 
-Observado nas telas 8.1 (Login) e 8.11 (Splash/Loading):
+Observado nas telas de Login e Splash/Loading:
+
 - Container quadrado com `borderRadius: 20dp`
 - Fundo: gradiente `kGradientPrimary` (não glassmorphism)
 - Ícone central: `MapPin` / `locationPin` — branco, ~36dp
@@ -288,7 +293,8 @@ class AppLogo extends StatelessWidget {
 
 ## 5. Bottom Navigation Bar
 
-Observado em todas as telas principais (8.1–8.10):
+Observado em todas as telas principais:
+
 - **4 abas:** Inspeções (`list`), Mapa (`map`), Laudos (`file-text`), Perfil (`user`)
 - Fundo: `surface` (branco no light, `#0D1117` no dark)
 - Sombra: `AppShadows.bottomNav`
@@ -310,7 +316,7 @@ Observado em todas as telas principais (8.1–8.10):
 
 ### 6.1 InspectionCard
 
-Observado na tela 8.2 (Home):
+Observado na tela Home:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -444,7 +450,7 @@ Row(children: [
 
 ### 8.1 — Tela de Login
 
-```
+```dart
 Scaffold(bg: background)
 └── SafeArea
     └── SingleChildScrollView → Padding(lg)
@@ -494,7 +500,7 @@ Scaffold(bg: background)
 
 ### 8.2 — Home (Minhas Inspeções)
 
-```
+```dart
 Scaffold(bg: background)
 ├── body: CustomScrollView
 │   ├── SliverToBoxAdapter → Padding(h: screenH, v: screenV)
@@ -533,7 +539,7 @@ Scaffold(bg: background)
 
 ### 8.3 — Mapa
 
-```
+```dart
 Scaffold
 └── body: Stack
     ├── FlutterMap(fullscreen, OSM tiles)
@@ -560,6 +566,7 @@ Scaffold
 ```
 
 **Heatmap visual (importante):**
+
 - Blobs circulares com `RadialGradient`: centro vermelho `#E53E3E` opaco → bordas verdes `#38A169` transparentes
 - Não usar biblioteca de heatmap — renderizar com `CustomPainter` e `RadialGradient` + `BlendMode.screen`
 
@@ -567,7 +574,7 @@ Scaffold
 
 ### 8.4 — Laudos Técnicos
 
-```
+```dart
 Scaffold(bg: background)
 ├── body: Padding(h: screenH)
 │   ├── SizedBox(h: screenV)
@@ -586,7 +593,7 @@ Scaffold(bg: background)
 
 ### 8.5 — Perfil
 
-```
+```dart
 Scaffold(bg: background)
 └── body: SingleChildScrollView
     ├── Container(h: 160dp, gradient: kGradientPrimary, radius-b: 0)
@@ -628,7 +635,7 @@ Scaffold(bg: background)
 
 ### 8.6 — Gestão de Equipe
 
-```
+```dart
 Scaffold(bg: background)
 └── body: Column
     ├── Container(gradient: kGradientPrimary, padding: screenH, rounded-b: 0)
@@ -647,7 +654,7 @@ Scaffold(bg: background)
 
 ### 8.7 — Exportar Dados
 
-```
+```dart
 Scaffold(bg: background)
 └── body: Padding(h: screenH)
     ├── SizedBox(h: screenV)
@@ -690,7 +697,7 @@ Scaffold(bg: background)
 
 ### 8.8 — Gestão de Usuários
 
-```
+```dart
 Scaffold(bg: background)
 └── body: Padding(h: screenH)
     ├── SizedBox(h: screenV)
@@ -705,6 +712,7 @@ Scaffold(bg: background)
 ```
 
 **UserCard avatar colors:**
+
 - Admin: bg `primary` (#3B55E6)
 - Inspetor ativo: bg `#38A169` (green)
 - Bloqueado: bg `#E53E3E` (red), ícone `userX` em vez de `user`
@@ -715,7 +723,7 @@ Scaffold(bg: background)
 
 **Layout de formulário scrollável único (não stepper/PageView):**
 
-```
+```dart
 Scaffold(bg: background)
 ├── AppBar(
 │     leading: IconButton(arrowLeft),
@@ -783,7 +791,7 @@ Scaffold(bg: background)
 
 ### 8.10 — Detalhe da Inspeção
 
-```
+```dart
 Scaffold
 └── body: CustomScrollView
     ├── SliverAppBar(
@@ -853,7 +861,7 @@ Scaffold
 
 ### 8.11 — Splash / Loading
 
-```
+```dart
 Scaffold
 └── Container(fullscreen, gradient: kGradientSplash)
     └── SafeArea
@@ -879,7 +887,7 @@ Scaffold
 
 ### 8.12 — Tela Offline
 
-```
+```dart
 Scaffold(bg: background)
 └── SafeArea
     └── Padding(h: screenH)
