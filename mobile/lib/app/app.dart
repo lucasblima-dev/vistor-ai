@@ -15,7 +15,7 @@ class VistorApp extends StatelessWidget {
       theme: lightTheme(),
       darkTheme: darkTheme(),
       locale: const Locale('pt', 'BR'),
-      routerConfig: router,
+      routerConfig: buildRouter(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
