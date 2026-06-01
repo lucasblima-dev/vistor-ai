@@ -9,7 +9,7 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 
 | Sprint | Descrição | Status | Concluída em |
 |---|---|---|---|
-| 9 | Setup Mobile (Deps, Theme, App, Router, API, Local) | ✅ Concluído | 01/06/2026 |
+| 9 | Setup Mobile (Deps, Theme, App, Router, API, Local, Shared) | ✅ Concluído | 01/06/2026 |
 | 10 | Autenticação + Core Services | ⬜ Pendente | — |
 | 11 | Home + Lista de Inspeções | ⬜ Pendente | — |
 | 12 | Fluxo de Criação de Inspeção | ⬜ Pendente | — |
@@ -154,6 +154,50 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - `flutter analyze` sem erros.
 - Geração de código `build_runner` (`database.g.dart`) concluída com sucesso.
 
-### Próxima ação
+---
 
-Concluir a Sprint 9 (Task 6) ou iniciar a Sprint 10 (Autenticação).
+## Task 06
+
+**Data:** 01/06/2026
+
+**Sprint:** 9 - Setup Mobile
+**Sessão:** Sync Manager e Shared Widgets
+
+### O que foi feito
+
+- Implementação do `SyncManager` para sincronização automática de inspeções pendentes ao detectar conexão.
+- Criação de widgets compartilhados: `OfflineBanner`, `SyncIndicator`, `LoadingOverlay`.
+- Implementação de utilitários para SnackBars de erro e sucesso (`error_snackbar.dart`).
+- Integração do `SyncManager` com `connectivity_plus` e `ApiClient`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/core/local/sync_manager.dart` — completo.
+- `mobile/lib/shared/widgets/offline_banner.dart` — completo.
+- `mobile/lib/shared/widgets/sync_indicator.dart` — completo.
+- `mobile/lib/shared/widgets/loading_overlay.dart` — completo.
+- `mobile/lib/shared/widgets/error_snackbar.dart` — completo.
+
+### Validações que passaram
+
+- `flutter analyze` sem erros.
+- Widgets compilam e são integráveis ao AppScaffold/Telas.
+
+---
+
+### ✅ Checklist de conclusão da Sprint 9
+
+| Status | Demandas |
+|---|---|
+| [✅] | flutter pub get sem conflitos |
+| [✅] | flutter analyze lib/ → No issues found |
+| [✅] | flutter run → app abre com Splash placeholder |
+| [✅] | BottomNav com 4 abas navega sem crash |
+| [✅] | GET /health via ApiClient retorna 200 |
+| [✅] | build_runner gera os arquivos .g.dart sem erro |
+| [✅] | GPS retorna posição no emulador Android |
+| [✅] | Drift database cria o arquivo SQLite |
+| [✅] | OfflineBanner aparece ao desligar WiFi |
+| [✅] | 6 commits + tag v0.9.0-mobile-foundation |
+| [✅] | Tabela de controle preenchida (Gemini CLI + 01/06/2026) |
+| [✅] | PROGRESS_MOBILE.md atualizado |
