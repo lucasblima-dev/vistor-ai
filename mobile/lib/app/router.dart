@@ -1,6 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
+import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
 
 // ─── Constantes de rota ───────────────────────────────────────────────────────
 
@@ -77,40 +83,56 @@ class AppScaffold extends StatelessWidget {
 
 // ─── Router Builder ──────────────────────────────────────────────────────────
 
-GoRouter buildRouter() {
+class AuthRefreshListenable extends ChangeNotifier {
+  AuthRefreshListenable(AuthCubit cubit) {
+    _subscription = cubit.stream.listen((state) {
+      notifyListeners();
+    });
+  }
+
+  late final StreamSubscription _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+GoRouter buildRouter(AuthCubit authCubit) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    /* 
-    // Guard de autenticação (Será ativado na Sprint 10)
+    refreshListenable: AuthRefreshListenable(authCubit),
     redirect: (context, state) {
+      final authState = authCubit.state;
       final bool loggingIn = state.matchedLocation == AppRoutes.login;
       final bool isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // Mock de estado de autenticação
-      const bool isAuthenticated = false; 
-
-      if (!isAuthenticated && !loggingIn && !isSplash) {
-        return AppRoutes.login;
-      }
-      if (isAuthenticated && (loggingIn || isSplash)) {
-        return AppRoutes.home;
-      }
-      return null;
+      return authState.maybeWhen(
+        authenticated: (_) {
+          if (loggingIn || isSplash) return AppRoutes.home;
+          return null;
+        },
+        unauthenticated: () {
+          if (loggingIn || isSplash) return null;
+          return AppRoutes.login;
+        },
+        error: (_) {
+           if (loggingIn || isSplash) return null;
+           return AppRoutes.login;
+        },
+        orElse: () => null, // Mantém no splash enquanto carrega
+      );
     },
-    */
     routes: [
       // Auth & Splash
       GoRoute(
         path: AppRoutes.splash,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Splash Screen')),
-        ),
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Login Screen')),
-        ),
+        builder: (context, state) => const LoginScreen(),
       ),
 
       // Shell para as abas principais
@@ -220,4 +242,10 @@ GoRouter buildRouter() {
       ),
     ],
   );
+}
+
+// Helper para acessar o contexto fora da árvore de widgets se necessário
+class GetItNavigator {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static BuildContext? get rootContext => navigatorKey.currentContext;
 }

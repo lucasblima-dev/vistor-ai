@@ -10,7 +10,7 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 | Sprint | Descrição | Status | Concluída em |
 |---|---|---|---|
 | 9 | Setup Mobile (Deps, Theme, App, Router, API, Local, Shared) | ✅ Concluído | 01/06/2026 |
-| 10 | Autenticação + Core Services | ⬜ Pendente | — |
+| 10 | Autenticação + Core Services | ✅ Concluído | 02/06/2026 |
 | 11 | Home + Lista de Inspeções | ⬜ Pendente | — |
 | 12 | Fluxo de Criação de Inspeção | ⬜ Pendente | — |
 | 13 | Mapa + Heatmap | ⬜ Pendente | — |
@@ -201,3 +201,48 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 | [✅] | 6 commits + tag v0.9.0-mobile-foundation |
 | [✅] | Tabela de controle preenchida (Gemini CLI + 01/06/2026) |
 | [✅] | PROGRESS_MOBILE.md atualizado |
+
+---
+
+## Task 07
+
+**Data:** 02/06/2026
+
+**Sprint:** 10 - Autenticação + Core Services
+**Sessão:** Feature Auth (Login, Cubit, Repository)
+
+### O que foi feito
+
+- Implementação completa da feature de autenticação:
+  - `User` model com Freezed e JSON serializável.
+  - `AuthRepository` com login, logout, refresh token e getMe.
+  - `AuthCubit` e `AuthState` (Freezed) para gerenciamento de estado reativo.
+  - `LoginScreen` seguindo rigorosamente o `LAYOUT.md` (tela 8.1).
+  - `LoginForm` com validações de email e senha.
+  - `SplashScreen` para o fluxo inicial de carregamento.
+- Configuração do `ServiceLocator` (GetIt) para injeção de dependências.
+- Integração do `AuthCubit` no `VistorApp` (app level provider).
+- Implementação de lógica de redirecionamento dinâmico no `GoRouter` baseada no estado de autenticação.
+- Adição do componente `AppLogo` conforme especificação visual.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/auth/data/auth_repository.dart` — completo.
+- `mobile/lib/features/auth/domain/auth_cubit.dart` — completo.
+- `mobile/lib/features/auth/domain/auth_state.dart` — completo.
+- `mobile/lib/features/auth/presentation/login_screen.dart` — completo.
+- `mobile/lib/features/auth/presentation/widgets/login_form.dart` — completo.
+- `mobile/lib/features/auth/presentation/splash_screen.dart` — completo.
+- `mobile/lib/shared/models/user.dart` — completo.
+- `mobile/lib/shared/widgets/app_logo.dart` — completo.
+- `mobile/lib/core/di/service_locator.dart` — completo.
+- `mobile/lib/app/router.dart` — atualizado.
+- `mobile/lib/app/app.dart` — atualizado.
+- `mobile/lib/main.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze lib/features/auth/` — sem erros (apenas um info de deprecation).
+- Geração de código `build_runner` concluída com sucesso para Freezed e JSON serializável.
+- Fluxo de autenticação (Splash -> Login -> Home) preparado e integrado.
+
