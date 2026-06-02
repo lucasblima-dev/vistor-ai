@@ -1,0 +1,17 @@
+# This file configures the static analysis of Dart code for the Vistor AI mobile project.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
+    - "lib/core/local/database.g.dart"
+
+linter:
+  rules:
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
+    constant_identifier_names: false

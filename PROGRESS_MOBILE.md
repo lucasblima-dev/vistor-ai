@@ -246,3 +246,39 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - Geração de código `build_runner` concluída com sucesso para Freezed e JSON serializável.
 - Fluxo de autenticação (Splash -> Login -> Home) preparado e integrado.
 
+---
+
+## Task 08
+
+**Data:** 02/06/2026
+
+**Sprint:** 10 - Autenticação + Core Services
+**Sessão:** DTOs Freezed (User, Inspection, Media, Report)
+
+### O que foi feito
+
+- Criação dos DTOs principais utilizando `Freezed` e `JsonSerializable`:
+  - `User`: Dados do usuário e enums de perfil.
+  - `Inspection`: Dados completos de inspeção, GPS, severidade e status.
+  - `Media`: Fotos, vídeos e anexos vinculados a inspeções.
+  - `Report`: Laudos técnicos gerados.
+- Configuração do `analysis_options.yaml` para suporte ao padrão Freezed e exclusão de arquivos gerados da análise.
+- Adição de dependências `json_annotation` e `json_serializable` ao `pubspec.yaml`.
+- Implementação de testes unitários para validar a serialização JSON dos modelos (`test/shared/models_test.dart`).
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/shared/models/user.dart` — atualizado.
+- `mobile/lib/shared/models/inspection.dart` — completo.
+- `mobile/lib/shared/models/media.dart` — completo.
+- `mobile/lib/shared/models/report.dart` — completo.
+- `mobile/analysis_options.yaml` — completo.
+- `mobile/test/shared/models_test.dart` — completo.
+
+### Validacões que passaram
+
+- `dart run build_runner build` — concluído sem erros.
+- `flutter analyze lib/shared/models/` — No issues found.
+- `flutter test test/shared/models_test.dart` — All tests passed!
+
+
