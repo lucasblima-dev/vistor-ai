@@ -1,10 +1,11 @@
-from typing import Optional, Any
+from typing import Optional, Any, List
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 import struct
 from app.models.inspection import InspectionStatus, InspectionSeverity
 from app.schemas.user import UserOut
+from app.schemas.media import MediaOut
 
 class LocationPoint(BaseModel):
     lat: float
@@ -37,6 +38,7 @@ class LocationPoint(BaseModel):
         return cls(lat=0.0, lon=0.0)
 
 class InspectionCreate(BaseModel):
+    title: str = Field(..., max_length=100)
     category: str = Field(..., max_length=60)
     description: Optional[str] = None
     lat: float = Field(..., ge=-90.0, le=90.0)
@@ -45,6 +47,7 @@ class InspectionCreate(BaseModel):
 
 class InspectionUpdate(BaseModel):
     status: Optional[InspectionStatus] = None
+    severity: Optional[InspectionSeverity] = None
     description: Optional[str] = None
     assigned_to: Optional[UUID] = None
     human_label: Optional[str] = None
@@ -53,6 +56,7 @@ class InspectionOut(BaseModel):
     id: UUID
     inspector_id: UUID
     assigned_to: Optional[UUID] = None
+    title: str
     category: str
     description: Optional[str] = None
     severity: Optional[InspectionSeverity] = None
@@ -69,6 +73,7 @@ class InspectionOut(BaseModel):
     updated_at: datetime
     
     inspector: UserOut
+    media: List[MediaOut] = []
 
     model_config = ConfigDict(from_attributes=True)
 

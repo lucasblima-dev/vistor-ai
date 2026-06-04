@@ -16,6 +16,7 @@ class MediaOut(BaseModel):
     type: MediaType
     minio_key: str
     thumbnail_key: Optional[str] = None
+    thumbnail_url: Optional[str] = None
     mime_type: str
     size_bytes: int
     created_at: datetime

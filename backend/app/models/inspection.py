@@ -24,6 +24,7 @@ class Inspection(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     inspector_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     assigned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    title = Column(String(100), nullable=False)
     category = Column(String(60), nullable=False)
     description = Column(Text, nullable=True)
     severity = Column(Enum(InspectionSeverity, name="severity_enum"), nullable=True)
@@ -41,3 +42,4 @@ class Inspection(Base):
 
     inspector = relationship("User", foreign_keys=[inspector_id])
     assigned = relationship("User", foreign_keys=[assigned_to])
+    media = relationship("Media", back_populates="inspection", cascade="all, delete-orphan")

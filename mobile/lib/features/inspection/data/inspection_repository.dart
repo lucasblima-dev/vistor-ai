@@ -44,6 +44,19 @@ class InspectionRepository {
     }
   }
 
+  Future<Inspection> getById(String id) async {
+    try {
+      final response = await _apiClient.dio.get(AppEndpoints.inspectionDetail(id));
+      if (response.statusCode == 200) {
+        return Inspection.fromJson(response.data);
+      }
+      throw Exception('Erro ao buscar detalhe da inspeção');
+    } on DioException catch (_) {
+      // Local fallback if needed
+      rethrow;
+    }
+  }
+
   Future<Inspection> create(InspectionCreate payload, {required String inspectorId}) async {
     try {
       final response = await _apiClient.dio.post(
@@ -54,7 +67,8 @@ class InspectionRepository {
       if (response.statusCode == 201) {
         return Inspection.fromJson(response.data);
       }
-      throw Exception('Erro ao criar inspeção');
+      final errorDetail = response.data['detail'] ?? 'Erro desconhecido';
+      throw Exception('Erro ao criar inspeção ($errorDetail)');
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout) {
@@ -62,6 +76,7 @@ class InspectionRepository {
         final localId = await _inspectionDao.insertLocalInspection(
           LocalInspectionsCompanion.insert(
             inspectorId: inspectorId,
+            title: payload.title,
             category: payload.category,
             description: Value(payload.description),
             lat: payload.lat,
@@ -76,15 +91,44 @@ class InspectionRepository {
         return Inspection(
           id: 'local_$localId',
           inspectorId: inspectorId,
+          title: payload.title,
           category: payload.category,
           description: payload.description,
-          lat: payload.lat,
-          lon: payload.lon,
+          location: LocationPoint(lat: payload.lat, lon: payload.lon),
           gpsAccuracy: payload.gpsAccuracy,
           status: InspectionStatus.draft,
           isSynced: false,
           createdAt: DateTime.now(),
         );
+      }
+      rethrow;
+    }
+  }
+
+  Future<Inspection> update(String id, InspectionUpdate payload) async {
+    try {
+      final response = await _apiClient.dio.patch(
+        AppEndpoints.inspectionUpdate(id),
+        data: payload.toJson(),
+      );
+
+      if (response.statusCode == 200) {
+        return Inspection.fromJson(response.data);
+      }
+      throw Exception('Erro ao atualizar inspeção');
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        
+        await _inspectionDao.updateLocal(
+          id,
+          payload.status?.name,
+          payload.severity?.name,
+          payload.humanLabel,
+        );
+
+        // Retornamos uma versão local (parcial) se necessário
+        // Mas o ideal é recarregar da lista local
       }
       rethrow;
     }
@@ -96,10 +140,10 @@ class InspectionRepository {
     return Inspection(
       id: local.remoteId ?? 'local_${local.id}',
       inspectorId: local.inspectorId,
+      title: local.title,
       category: local.category,
       description: local.description,
-      lat: local.lat,
-      lon: local.lon,
+      location: LocationPoint(lat: local.lat, lon: local.lon),
       gpsAccuracy: local.gpsAccuracy,
       status: _mapStatus(local.status),
       severity: _mapSeverity(local.severity),

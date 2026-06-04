@@ -170,7 +170,11 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.createInspection),
+        onPressed: () => context.push(AppRoutes.createInspection).then((_) {
+          if (context.mounted) {
+            context.read<InspectionCubit>().load();
+          }
+        }),
         backgroundColor: const Color(0xFF3B55E6),
         icon: const Icon(LucideIcons.plus, color: Colors.white),
         label: const Text('Nova Inspeção', style: TextStyle(color: Colors.white)),

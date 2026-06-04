@@ -9,9 +9,20 @@ from fastapi import HTTPException, status
 from app.models.inspection import Inspection, InspectionStatus
 from app.models.user import User, UserRole
 from app.schemas.inspection import InspectionCreate, InspectionUpdate
-from app.services import audit_service
+from app.services import audit_service, storage_service
 from geoalchemy2 import Geometry as GeoGeometry, Geography
 from geoalchemy2.functions import ST_GeomFromText, ST_DWithin, ST_Distance, ST_MakePoint
+
+async def _populate_media_urls(inspections: List[Inspection] | Inspection):
+    if isinstance(inspections, Inspection):
+        list_inspections = [inspections]
+    else:
+        list_inspections = inspections
+        
+    for insp in list_inspections:
+        for m in insp.media:
+            if m.thumbnail_key:
+                m.thumbnail_url = await storage_service.get_presigned_download_url("thumbnails", m.thumbnail_key)
 
 async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) -> Inspection:
     # Converte lat/lon para WKT (Longitude primeiro no WKT POINT)
@@ -19,6 +30,7 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) ->
     
     inspection = Inspection(
         inspector_id=owner_id,
+        title=payload.title,
         category=payload.category,
         description=payload.description,
         location=ST_GeomFromText(wkt_point, srid=4326),
@@ -29,9 +41,14 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) ->
     db.add(inspection)
     await db.commit()
     
-    query = select(Inspection).where(Inspection.id == inspection.id).options(selectinload(Inspection.inspector))
+    query = select(Inspection).where(Inspection.id == inspection.id).options(
+        selectinload(Inspection.inspector),
+        selectinload(Inspection.media)
+    )
     result = await db.execute(query)
-    return result.scalar_one()
+    insp = result.scalar_one()
+    await _populate_media_urls(insp)
+    return insp
 
 async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -> Inspection:
     query = select(Inspection).where(
@@ -39,7 +56,10 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
             Inspection.id == inspection_id,
             Inspection.deleted_at.is_(None)
         )
-    ).options(selectinload(Inspection.inspector))
+    ).options(
+        selectinload(Inspection.inspector),
+        selectinload(Inspection.media)
+    )
     result = await db.execute(query)
     inspection = result.scalar_one_or_none()
     
@@ -58,7 +78,8 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acesso negado — recurso pertence a outro usuário"
             )
-            
+    
+    await _populate_media_urls(inspection)
     return inspection
 
 async def list_by_user(
@@ -68,7 +89,10 @@ async def list_by_user(
     limit: int = 20, 
     cursor: Optional[datetime] = None
 ) -> List[Inspection]:
-    query = select(Inspection).where(Inspection.deleted_at.is_(None)).options(selectinload(Inspection.inspector))
+    query = select(Inspection).where(Inspection.deleted_at.is_(None)).options(
+        selectinload(Inspection.inspector),
+        selectinload(Inspection.media)
+    )
     
     if current_user.role == UserRole.inspector:
         query = query.where(
@@ -87,7 +111,9 @@ async def list_by_user(
     query = query.order_by(desc(Inspection.created_at)).limit(limit)
     
     result = await db.execute(query)
-    return list(result.scalars().all())
+    inspections = list(result.scalars().all())
+    await _populate_media_urls(inspections)
+    return inspections
 
 async def update(
     db: AsyncSession, 
@@ -119,6 +145,12 @@ async def update(
     
     if payload.assigned_to is not None:
         inspection.assigned_to = payload.assigned_to
+
+    if hasattr(payload, 'severity') and payload.severity is not None:
+        inspection.severity = payload.severity
+    else:
+        # Se for criação ou não vier no payload, a IA definirá depois
+        pass
         
     if payload.human_label is not None:
         inspection.human_label = payload.human_label
@@ -126,7 +158,10 @@ async def update(
     await db.commit()
     await db.refresh(inspection)
 
-    query = select(Inspection).where(Inspection.id == inspection.id).options(selectinload(Inspection.inspector))
+    query = select(Inspection).where(Inspection.id == inspection.id).options(
+        selectinload(Inspection.inspector),
+        selectinload(Inspection.media)
+    )
     result = await db.execute(query)
     inspection = result.scalar_one()
     
@@ -142,6 +177,7 @@ async def update(
         new_value=new_value
     )
     
+    await _populate_media_urls(inspection)
     return inspection
 
 async def soft_delete(db: AsyncSession, inspection_id: UUID, current_user: User) -> None:
@@ -184,7 +220,13 @@ async def get_nearby(
                 radius_m
             )
         )
-    ).options(selectinload(Inspection.inspector)).order_by("distance_m")
+    ).options(
+        selectinload(Inspection.inspector),
+        selectinload(Inspection.media)
+    ).order_by("distance_m")
     
     result = await db.execute(query)
-    return list(result.all())
+    rows = list(result.all())
+    for row in rows:
+        await _populate_media_urls(row[0])
+    return rows

@@ -11,6 +11,7 @@ class LocalInspections extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get remoteId => text().nullable()();
   TextColumn get inspectorId => text()();
+  TextColumn get title => text()();
   TextColumn get category => text()();
   TextColumn get description => text().nullable()();
   RealColumn get lat => real()();
@@ -27,7 +28,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await m.addColumn(localInspections, localInspections.title);
+        }
+      },
+    );
+  }
 }
 
 LazyDatabase _openConnection() {

@@ -11,6 +11,7 @@ import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
+import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
 import 'package:vistor_ai_mobile/shared/widgets/offline_banner.dart';
 
 // ─── Constantes de rota ───────────────────────────────────────────────────────
@@ -169,9 +170,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
                 routes: [
                   GoRoute(
                     path: 'create', // /inspections/create
-                    builder: (context, state) => const Scaffold(
-                      body: Center(child: Text('Nova Inspeção')),
-                    ),
+                    builder: (context, state) => const CreateInspectionScreen(),
                   ),
                   GoRoute(
                     path: ':id', // /inspections/:id

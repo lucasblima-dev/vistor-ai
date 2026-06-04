@@ -1,6 +1,7 @@
 import enum
 from sqlalchemy import Column, String, Integer, DateTime, Enum, ForeignKey, text, func, Text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 class MediaType(str, enum.Enum):
@@ -25,3 +26,5 @@ class Media(Base):
     mime_type = Column(String(80), nullable=False)
     size_bytes = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    inspection = relationship("Inspection", back_populates="media")

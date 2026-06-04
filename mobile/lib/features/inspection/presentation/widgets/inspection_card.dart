@@ -24,7 +24,18 @@ class _InspectionCardState extends State<InspectionCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateStr = DateFormat('dd MMM yyyy, HH:mm', 'pt_BR').format(widget.inspection.createdAt);
+    final dateStr = DateFormat('dd MMM yyyy, HH:mm', 'pt_BR').format(widget.inspection.createdAt.toLocal());
+    
+    // Tenta obter a primeira miniatura disponível
+    String? thumbnailUrl;
+    if (widget.inspection.media.isNotEmpty) {
+      for (var m in widget.inspection.media) {
+        if (m.thumbnailUrl != null) {
+          thumbnailUrl = m.thumbnailUrl;
+          break;
+        }
+      }
+    }
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.98),
@@ -50,18 +61,28 @@ class _InspectionCardState extends State<InspectionCard> {
           ),
           child: Row(
             children: [
-              // Thumbnail placeholder
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
+              // Thumbnail ou ícone de categoria
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 72,
+                  height: 72,
                   color: theme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getCategoryIcon(widget.inspection.category),
-                  color: theme.primaryColor,
-                  size: 28,
+                  child: thumbnailUrl != null
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          _getCategoryIcon(widget.inspection.category),
+                          color: theme.primaryColor,
+                          size: 28,
+                        ),
+                      )
+                    : Icon(
+                        _getCategoryIcon(widget.inspection.category),
+                        color: theme.primaryColor,
+                        size: 28,
+                      ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -80,9 +101,18 @@ class _InspectionCardState extends State<InspectionCard> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.inspection.description ?? 'Sem descrição',
+                      widget.inspection.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.inspection.description ?? 'Sem descrição',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

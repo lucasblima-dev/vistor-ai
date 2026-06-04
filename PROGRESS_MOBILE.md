@@ -234,11 +234,11 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - `mobile/lib/features/auth/presentation/widgets/login_form.dart` — completo.
 - `mobile/lib/features/auth/presentation/splash_screen.dart` — completo.
 - `mobile/lib/shared/models/user.dart` — completo.
-- `mobile/lib/shared/widgets/app_logo.dart` — completo.
-- `mobile/lib/core/di/service_locator.dart` — completo.
-- `mobile/lib/app/router.dart` — atualizado.
-- `mobile/lib/app/app.dart` — atualizado.
-- `mobile/lib/main.dart` — atualizado.
+- `mobile/lib/shared/widgets/app_logo.dart" — completo.
+- `mobile/lib/core/di/service_locator.dart" — completo.
+- `mobile/lib/app/router.dart" — atualizado.
+- `mobile/lib/app/app.dart" — atualizado.
+- `mobile/lib/main.dart" — atualizado.
 
 ### Validações que passaram
 
@@ -421,6 +421,40 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - Mensagens de erro testadas simulando queda de rede.
 - `flutter analyze` — No issues found.
 
+---
 
+## Task 13
 
+**Data:** 03/06/2026
 
+**Sprint:** 10 - Autenticação + Core Services
+**Sessão:** Fluxo Completo de Nova Inspeção (Task 10.4)
+
+### O que foi feito
+
+- Implementação do `MediaService` para gerenciamento de upload direto para MinIO com suporte a compressão de imagens > 5MB.
+- Criação da `CreateInspectionScreen` seguindo o padrão de formulário scrollável único e Glassmorphism.
+- Desenvolvimento do `CreateInspectionCubit` para gerenciar o estado complexo de criação (GPS, Fotos, IA).
+- Implementação de widgets especializados: `GlassCard`, `MediaPickerSheet` (Camera/Galeria) e `AiResultCard` (Resultado da IA).
+- Adição de animação de pulso no GPS e validação de precisão (RN-08).
+- Integração do fluxo: Cadastro de inspeção -> Captura GPS -> Upload de fotos -> Classificação automática via IA -> Confirmação.
+- Atualização do `InspectionRepository` e `InspectionDao` para suporte a `getById` e atualizações locais/remotas.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/core/services/media_service.dart` — criado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — implementado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — implementado.
+- `mobile/lib/features/inspection/presentation/widgets/media_picker_sheet.dart` — implementado.
+- `mobile/lib/features/inspection/presentation/widgets/ai_result_card.dart` — implementado.
+- `mobile/lib/shared/widgets/glass_card.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — serviços registrados.
+- `mobile/lib/app/router.dart` — rotas atualizadas.
+- `mobile/lib/features/inspection/presentation/inspection_list_screen.dart` — refresh após criação adicionado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found.
+- Implementação da lógica de UI e integração com MediaService concluída.
+- Geração de código via `build_runner` validada.
+- **Pronto para validação manual do fluxo completo e da classificação de IA.**

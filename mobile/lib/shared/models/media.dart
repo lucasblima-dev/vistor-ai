@@ -20,6 +20,7 @@ abstract class Media with _$Media {
     required MediaType type,
     @JsonKey(name: 'minio_key') required String minioKey,
     @JsonKey(name: 'thumbnail_key') String? thumbnailKey,
+    @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
     @JsonKey(name: 'mime_type') required String mimeType,
     @JsonKey(name: 'size_bytes') required int sizeBytes,
     @JsonKey(name: 'created_at') required DateTime createdAt,
