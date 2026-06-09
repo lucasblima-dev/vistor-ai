@@ -39,7 +39,13 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
         );
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
-          address = '${p.street}, ${p.subLocality}, ${p.subAdministrativeArea}';
+          final parts = [
+            if (p.street != null && p.street!.isNotEmpty) p.street,
+            if (p.subLocality != null && p.subLocality!.isNotEmpty) p.subLocality,
+            if (p.subAdministrativeArea != null && p.subAdministrativeArea!.isNotEmpty) p.subAdministrativeArea,
+            if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty) p.administrativeArea,
+          ];
+          address = parts.isNotEmpty ? parts.join(', ') : 'Endereço identificado via GPS';
         }
       } catch (_) {
         // Reverse geocoding failed, use fallback
@@ -97,6 +103,7 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
         lat: state.position!.latitude,
         lon: state.position!.longitude,
         gpsAccuracy: state.position!.accuracy,
+        address: state.address,
       );
 
       final inspection = await _repository.create(payload, inspectorId: inspectorId);

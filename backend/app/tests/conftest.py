@@ -56,7 +56,8 @@ from app.schemas.user import UserCreate
 TEST_DB_NAME = "vistor_ai_test"
 # Se estiver rodando fora do Docker, 'db' não será resolvido. Trocamos para localhost se necessário.
 db_url = settings.DATABASE_URL
-if "db:5432" in db_url:
+import os
+if not os.path.exists('/.dockerenv') and "db:5432" in db_url:
     db_url = db_url.replace("db:5432", "localhost:5432")
 SQLALCHEMY_DATABASE_URL_TEST = db_url.replace("vistor_ai", TEST_DB_NAME)
 

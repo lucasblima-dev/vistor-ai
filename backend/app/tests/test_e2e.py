@@ -38,9 +38,8 @@ async def test_complete_workflow_e2e(client: AsyncClient, db_session: AsyncSessi
     access_token = login_response.json()["access_token"]
     auth_headers = {"Authorization": f"Bearer {access_token}"}
 
-    # --- 3. Criar inspeção com coordenadas de São Paulo ---
-    # Coordenadas: Praça da Sé, SP
     inspection_payload = {
+        "title": "Rachadura em pilar",
         "category": "civil",
         "description": "Rachadura em pilar de concreto",
         "lat": -23.5505,

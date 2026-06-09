@@ -69,6 +69,25 @@ async def get_presigned_download_url(bucket: str, key: str, expires: int = 3600)
             detail="Erro ao conectar com o serviço de armazenamento",
         )
 
+async def get_internal_presigned_download_url(bucket: str, key: str, expires: int = 3600) -> str:
+    """Gera uma URL pré-assinada acessível pela rede interna do Docker (usado pelo WeasyPrint)."""
+    try:
+        async with get_s3_client_context() as client:
+            return await client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": bucket,
+                    "Key": key,
+                },
+                ExpiresIn=expires,
+            )
+    except Exception as e:
+        logger.error(f"Error generating internal presigned download URL: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Erro ao conectar com o serviço de armazenamento",
+        )
+
 async def delete_object(bucket: str, key: str) -> None:
     try:
         async with get_s3_client_context() as client:

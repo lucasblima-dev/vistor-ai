@@ -4,10 +4,12 @@ import 'package:vistor_ai_mobile/shared/models/inspection.dart';
 
 class SeverityBadge extends StatelessWidget {
   final InspectionSeverity? severity;
+  final bool isLarge;
 
   const SeverityBadge({
     super.key,
     this.severity,
+    this.isLarge = false,
   });
 
   @override
@@ -44,7 +46,10 @@ class SeverityBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLarge ? 14 : 10, 
+        vertical: isLarge ? 8 : 4,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
@@ -53,7 +58,7 @@ class SeverityBadge extends StatelessWidget {
         label.toUpperCase(),
         style: TextStyle(
           color: textColor,
-          fontSize: 10,
+          fontSize: isLarge ? 12 : 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),

@@ -39,14 +39,16 @@ async def _get_media_urls(db: AsyncSession, inspection_id: uuid.UUID) -> List[st
     urls = []
     for photo in photos:
         try:
-            url = await storage_service.get_presigned_download_url(
+            # WeasyPrint roda DENTRO do container, então precisamos da URL interna (minio:9000)
+            # e não da externa (localhost:9000) que o app mobile usa.
+            url = await storage_service.get_internal_presigned_download_url(
                 bucket="inspections",
                 key=photo.minio_key,
                 expires=3600
             )
             urls.append(url)
         except Exception as e:
-            logger.error(f"Error generating presigned URL for photo {photo.id}: {e}")
+            logger.error(f"Error generating internal presigned URL for photo {photo.id}: {e}")
             
     return urls
 

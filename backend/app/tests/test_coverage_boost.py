@@ -84,7 +84,7 @@ async def test_geo_service_export_geojson(db_session: AsyncSession):
     await db_session.commit()
     
     # Create an inspection using the service
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user.id)
     
     output, filename = await geo_service.export_data(db_session, "geojson")
@@ -101,7 +101,7 @@ async def test_geo_service_export_csv(db_session: AsyncSession):
     await db_session.commit()
     
     # Create an inspection
-    payload = InspectionCreate(category="electrical", lat=-6.0, lon=-36.0, gps_accuracy=5.0)
+    payload = InspectionCreate(title="Export CSV", category="electrical", lat=-6.0, lon=-36.0, gps_accuracy=5.0)
     insp = await inspection_service.create(db_session, payload, user.id)
     
     output, filename = await geo_service.export_data(db_session, "csv")
@@ -124,7 +124,7 @@ async def test_inspection_service_update_not_owner(db_session: AsyncSession):
     db_session.add_all([user1, user2])
     await db_session.commit()
     
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user1.id)
     
     update_payload = InspectionUpdate(description="updated")
@@ -151,16 +151,16 @@ async def test_pdf_service_generate_report(db_session: AsyncSession):
     await db_session.commit()
     
     # Create inspection
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user.id)
     
-    # Mock weasyprint HTML.write_pdf
-    if "weasyprint" in sys.modules:
-        mock_html = sys.modules["weasyprint"].HTML
-        mock_html.return_value.write_pdf.return_value = b"fake_pdf_content"
-    
-    # Mock s3
-    with patch("app.services.storage_service.get_s3_client_context") as mock_s3:
+    # Mock weasyprint and s3
+    with patch("weasyprint.HTML") as mock_html_class, \
+         patch("app.services.storage_service.get_s3_client_context") as mock_s3:
+        
+        mock_html_instance = mock_html_class.return_value
+        mock_html_instance.write_pdf.return_value = b"fake_pdf_content"
+        
         mock_client = AsyncMock()
         mock_s3.return_value.__aenter__.return_value = mock_client
         
@@ -181,7 +181,7 @@ async def test_pdf_service_verify_report_hash(db_session: AsyncSession):
     await db_session.commit()
     
     # Create inspection
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user.id)
 
     # Create report manually
@@ -231,7 +231,7 @@ async def test_media_router_presign_error_mime(authed_client, db_session):
     result = await db_session.execute(select(User).where(User.email == "inspector@vistor.ai"))
     user = result.scalar_one()
     
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user.id)
 
     response = await authed_client.post("/api/media/presign", json={
@@ -249,7 +249,7 @@ async def test_media_router_presign_error_size(authed_client, db_session):
     result = await db_session.execute(select(User).where(User.email == "inspector@vistor.ai"))
     user = result.scalar_one()
     
-    payload = InspectionCreate(category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
+    payload = InspectionCreate(title="Teste", category="civil", lat=-5.0, lon=-35.0, gps_accuracy=10.0)
     insp = await inspection_service.create(db_session, payload, user.id)
 
     response = await authed_client.post("/api/media/presign", json={

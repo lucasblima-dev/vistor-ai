@@ -6,12 +6,57 @@ import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/severi
 import 'package:vistor_ai_mobile/shared/models/inspection.dart';
 import 'package:intl/intl.dart';
 
+class _StatusIndicator extends StatelessWidget {
+  final InspectionStatus status;
+
+  const _StatusIndicator({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    IconData icon;
+    
+    switch (status) {
+      case InspectionStatus.open:
+        color = Colors.blue;
+        icon = LucideIcons.circle;
+        break;
+      case InspectionStatus.inProgress:
+        color = Colors.orange;
+        icon = LucideIcons.playCircle;
+        break;
+      case InspectionStatus.resolved:
+        color = Colors.green;
+        icon = LucideIcons.checkCircle2;
+        break;
+      case InspectionStatus.archived:
+        color = Colors.grey;
+        icon = LucideIcons.archive;
+        break;
+      default:
+        color = Colors.grey;
+        icon = LucideIcons.helpCircle;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 16),
+    );
+  }
+}
+
 class InspectionCard extends StatefulWidget {
   final Inspection inspection;
+  final VoidCallback? onTap;
 
   const InspectionCard({
     super.key,
     required this.inspection,
+    this.onTap,
   });
 
   @override
@@ -26,7 +71,6 @@ class _InspectionCardState extends State<InspectionCard> {
     final theme = Theme.of(context);
     final dateStr = DateFormat('dd MMM yyyy, HH:mm', 'pt_BR').format(widget.inspection.createdAt.toLocal());
     
-    // Tenta obter a primeira miniatura disponível
     String? thumbnailUrl;
     if (widget.inspection.media.isNotEmpty) {
       for (var m in widget.inspection.media) {
@@ -41,7 +85,10 @@ class _InspectionCardState extends State<InspectionCard> {
       onTapDown: (_) => setState(() => _scale = 0.98),
       onTapUp: (_) => setState(() => _scale = 1.0),
       onTapCancel: () => setState(() => _scale = 1.0),
-      onTap: () => context.push(AppRoutes.inspection(widget.inspection.id)),
+      onTap: () async {
+        await context.push(AppRoutes.inspection(widget.inspection.id));
+        widget.onTap?.call();
+      },
       child: AnimatedScale(
         scale: _scale,
         duration: const Duration(milliseconds: 100),
@@ -61,33 +108,34 @@ class _InspectionCardState extends State<InspectionCard> {
           ),
           child: Row(
             children: [
-              // Thumbnail ou ícone de categoria
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  color: theme.primaryColor.withValues(alpha: 0.1),
-                  child: thumbnailUrl != null
-                    ? Image.network(
-                        thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Icon(
+              Hero(
+                tag: 'inspection-${widget.inspection.id}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    color: theme.primaryColor.withValues(alpha: 0.1),
+                    child: thumbnailUrl != null
+                      ? Image.network(
+                          thumbnailUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            _getCategoryIcon(widget.inspection.category),
+                            color: theme.primaryColor,
+                            size: 28,
+                          ),
+                        )
+                      : Icon(
                           _getCategoryIcon(widget.inspection.category),
                           color: theme.primaryColor,
                           size: 28,
                         ),
-                      )
-                    : Icon(
-                        _getCategoryIcon(widget.inspection.category),
-                        color: theme.primaryColor,
-                        size: 28,
-                      ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               
-              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,8 +193,9 @@ class _InspectionCardState extends State<InspectionCard> {
                 ),
               ),
               
-              // Severity
               SeverityBadge(severity: widget.inspection.severity),
+              const SizedBox(width: 8),
+              _StatusIndicator(status: widget.inspection.status),
             ],
           ),
         ),

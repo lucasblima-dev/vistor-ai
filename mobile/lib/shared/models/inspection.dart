@@ -80,6 +80,7 @@ abstract class InspectionCreate with _$InspectionCreate {
     required double lat,
     required double lon,
     @JsonKey(name: 'gps_accuracy') double? gpsAccuracy,
+    String? address,
   }) = _InspectionCreate;
 
   factory InspectionCreate.fromJson(Map<String, dynamic> json) => _$InspectionCreateFromJson(json);

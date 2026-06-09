@@ -53,7 +53,7 @@ mobile/android/captures/
 mobile/android/gradlew
 mobile/android/gradlew.bat
 mobile/android/local.properties
-mobile/android/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.java
 mobile/android/key.properties
 mobile/android/gradle-wrapper.jar
 mobile/android/**/*.keystore

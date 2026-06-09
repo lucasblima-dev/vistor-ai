@@ -41,6 +41,22 @@ async def generate_report_task(
     
     return {"status": "generating", "message": "O laudo está sendo processado."}
 
+@router.get("/", response_model=list[ReportOut])
+async def list_reports(
+    db: AsyncSession = Depends(get_db),
+    user = Depends(get_current_user)
+):
+    """Lista todos os laudos, filtrando por permissão (inspetores veem os seus, gestores todos)."""
+    query = select(Report)
+    
+    if user.role == "inspector":
+        query = query.where(Report.generated_by == user.id)
+        
+    result = await db.execute(query)
+    reports = result.scalars().all()
+    
+    return reports
+
 @router.get("/{id}", response_model=ReportOut)
 async def get_report(
     id: UUID,

@@ -5,6 +5,7 @@ import 'package:vistor_ai_mobile/features/inspection/domain/inspection_state.dar
 class InspectionCubit extends Cubit<InspectionState> {
   final InspectionRepository _repository;
   String? _currentStatus;
+  String? _currentSeverity;
 
   InspectionCubit({
     required InspectionRepository repository,
@@ -14,7 +15,10 @@ class InspectionCubit extends Cubit<InspectionState> {
   Future<void> load() async {
     emit(const InspectionState.loading());
     try {
-      final inspections = await _repository.getAll(status: _currentStatus);
+      final inspections = await _repository.getAll(
+        status: _currentStatus,
+        severity: _currentSeverity,
+      );
       if (inspections.isEmpty) {
         emit(const InspectionState.empty());
       } else {
@@ -33,4 +37,12 @@ class InspectionCubit extends Cubit<InspectionState> {
     _currentStatus = status;
     load();
   }
+
+  void filterBySeverity(String? severity) {
+    _currentSeverity = severity;
+    load();
+  }
+
+  String? get currentStatus => _currentStatus;
+  String? get currentSeverity => _currentSeverity;
 }

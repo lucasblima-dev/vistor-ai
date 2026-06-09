@@ -11,6 +11,7 @@ from app.schemas.user import UserCreate
 async def test_create_inspection_success(authed_client: AsyncClient):
     # 1. POST /inspections/ com dados válidos → 201, retorna InspectionOut
     payload = {
+        "title": "Inspeção Teste",
         "category": "civil",
         "description": "Buraco na via",
         "lat": -23.55,
@@ -31,6 +32,7 @@ async def test_create_inspection_success(authed_client: AsyncClient):
 async def test_create_inspection_no_auth(client: AsyncClient):
     # 2. POST /inspections/ sem autenticação → 401
     payload = {
+        "title": "Sem Auth",
         "category": "civil",
         "lat": -23.55,
         "lon": -46.63
@@ -55,10 +57,10 @@ async def test_list_inspections_rbac(
     other_token = res.json()["access_token"]
     
     # Outro inspetor cria 1
-    await client.post("/api/inspections/", json={"category": "cat1", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {other_token}"})
+    await client.post("/api/inspections/", json={"title": "T1", "category": "cat1", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {other_token}"})
     
     # Inspetor principal cria 1
-    await client.post("/api/inspections/", json={"category": "cat2", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {inspector_token}"})
+    await client.post("/api/inspections/", json={"title": "T2", "category": "cat2", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {inspector_token}"})
     
     # Teste Inspetor: deve ver apenas 1
     res_insp = await client.get("/api/inspections/", headers={"Authorization": f"Bearer {inspector_token}"})
@@ -72,7 +74,7 @@ async def test_list_inspections_rbac(
 @pytest.mark.asyncio
 async def test_get_inspection_owner_success(authed_client: AsyncClient):
     # 5. GET /inspections/{id} do inspetor proprietário → 200
-    res_create = await authed_client.post("/api/inspections/", json={"category": "own", "lat": 0, "lon": 0})
+    res_create = await authed_client.post("/api/inspections/", json={"title": "Own Title", "category": "own", "lat": 0, "lon": 0})
     insp_id = res_create.json()["id"]
     
     response = await authed_client.get(f"/api/inspections/{insp_id}")
@@ -91,7 +93,7 @@ async def test_get_inspection_idor_forbidden(
     res = await client.post("/api/auth/login", json={"email": "o_idor@v.ai", "password": "password123"})
     o_token = res.json()["access_token"]
     
-    res_create = await client.post("/api/inspections/", json={"category": "p", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {o_token}"})
+    res_create = await client.post("/api/inspections/", json={"title": "IDOR", "category": "p", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {o_token}"})
     insp_id = res_create.json()["id"]
     
     response = await client.get(f"/api/inspections/{insp_id}", headers={"Authorization": f"Bearer {inspector_token}"})
@@ -109,7 +111,7 @@ async def test_get_inspection_manager_access(
     res = await client.post("/api/auth/login", json={"email": "i_mgr@v.ai", "password": "password123"})
     i_token = res.json()["access_token"]
     
-    res_create = await client.post("/api/inspections/", json={"category": "any", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {i_token}"})
+    res_create = await client.post("/api/inspections/", json={"title": "Any", "category": "any", "lat": 0, "lon": 0}, headers={"Authorization": f"Bearer {i_token}"})
     insp_id = res_create.json()["id"]
     
     response = await client.get(f"/api/inspections/{insp_id}", headers={"Authorization": f"Bearer {manager_token}"})
@@ -118,7 +120,7 @@ async def test_get_inspection_manager_access(
 @pytest.mark.asyncio
 async def test_update_inspection_status(authed_client: AsyncClient):
     # 8. PATCH /inspections/{id} atualizando status → 200, novo status retornado
-    res_create = await authed_client.post("/api/inspections/", json={"category": "c", "lat": 0, "lon": 0})
+    res_create = await authed_client.post("/api/inspections/", json={"title": "Update", "category": "c", "lat": 0, "lon": 0})
     insp_id = res_create.json()["id"]
     
     res_patch = await authed_client.patch(f"/api/inspections/{insp_id}", json={"status": "in_progress"})
@@ -129,7 +131,7 @@ async def test_update_inspection_status(authed_client: AsyncClient):
 async def test_soft_delete_flow(authed_client: AsyncClient, db_session: AsyncSession):
     # 9. DELETE /inspections/{id} → 204 (NO CONTENT), inspeção some da listagem
     # 10. DELETE /inspections/{id} → inspeção ainda existe no banco com deleted_at preenchido
-    res_create = await authed_client.post("/api/inspections/", json={"category": "del", "lat": 0, "lon": 0})
+    res_create = await authed_client.post("/api/inspections/", json={"title": "Delete", "category": "del", "lat": 0, "lon": 0})
     insp_id = res_create.json()["id"]
     
     res_del = await authed_client.delete(f"/api/inspections/{insp_id}")
@@ -150,9 +152,9 @@ async def test_geo_nearby_radius(authed_client: AsyncClient):
     lat_center, lon_center = -23.5505, -46.6333 # SP
     
     # Perto (aprox 80m)
-    await authed_client.post("/api/inspections/", json={"category": "near", "lat": -23.5512, "lon": -46.6333})
+    await authed_client.post("/api/inspections/", json={"title": "Near", "category": "near", "lat": -23.5512, "lon": -46.6333})
     # Longe (aprox 6km)
-    await authed_client.post("/api/inspections/", json={"category": "far", "lat": -23.6, "lon": -46.7})
+    await authed_client.post("/api/inspections/", json={"title": "Far", "category": "far", "lat": -23.6, "lon": -46.7})
     
     response = await authed_client.get(f"/api/geo/nearby?lat={lat_center}&lon={lon_center}&radius_m=500")
     assert response.status_code == 200

@@ -9,14 +9,12 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 
 | Sprint | Descrição | Status | Concluída em |
 |---|---|---|---|
-| 9 | Setup Mobile (Deps, Theme, App, Router, API, Local, Shared) | ✅ Concluído | 01/06/2026 |
-| 10 | Autenticação + Core Services | ✅ Concluído | 04/06/2026 |
-| 11 | Home + Lista de Inspeções | ⏳ Em andamento | — |
-| 12 | Fluxo de Criação de Inspeção | ⬜ Pendente | — |
-| 13 | Mapa + Heatmap | ⬜ Pendente | — |
-| 14 | Offline + Sincronização | ⬜ Pendente | — |
-| 15 | Laudos + PDF Viewer | ⬜ Pendente | — |
-| 16 | Gestão de Equipe + Usuários | ⬜ Pendente | — |
+| 9 | Setup Mobile foundation | ✅ Concluído | 01/06/2026 |
+| 10 | Auth + Home + Nova Inspeção | ✅ Concluído | 04/06/2026 |
+| 11 | Detalhe da Inspeção + Gerar Laudo | ✅ Concluído | 09/06/2026 |
+| 12 | Mapa + Heatmap | ⏳ Em andamento | — |
+| 13 | Laudos + Perfil + Offline | ⬜ Pendente | — | — |
+| 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — | — |
 
 ---
 
@@ -508,3 +506,93 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 | [✅] | 5 commits + tag v0.10.0-core-flow |
 | [✅] | Tabela de controle preenchida (Gemini CLI + 04/06/2026) |
 | [✅] | PROGRESS.md atualizado |
+
+---
+
+## Task 15
+
+**Data:** 05/06/2026
+
+**Sprint:** 11 - Detalhe de Inspeção + Gerar Laudo
+**Sessão:** Detalhe da Inspeção (11.1)
+
+### O que foi feito
+
+- Implementação da tela `InspectionDetailScreen` utilizando `CustomScrollView` e `SliverAppBar` pinned (260dp).
+- Configuração de `FlexibleSpaceBar` com gradient overlay, título dinâmico e `SeverityBadge` em tamanho grande.
+- Implementação do widget `StatusTimeline` vertical para visualização do histórico de eventos da inspeção.
+- Criação do `InspectionDetailCubit` e `InspectionDetailState` para gerenciamento de estado granular (detalhe, histórico, report).
+- Integração da animação `Hero` entre `InspectionCard` e `InspectionDetailScreen` (tag `inspection-{id}`).
+- Implementação da `InfoGrid` 2x2 com ícones `LucideIcons` para Localização, Categoria, Data e Inspetor.
+- Adição da seção de "Análise de IA" com `LinearProgressIndicator` colorido conforme score e botões de Confirmar/Corrigir.
+- Configuração de bottom bar fixa para geração de laudo PDF (habilitada apenas para status `in_progress` ou `resolved`, cumprindo RN-05).
+- Atualização do `InspectionRepository` com métodos `getHistory` e `generateReport`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/inspection/presentation/inspection_detail_screen.dart` — completo.
+- `mobile/lib/features/inspection/presentation/widgets/status_timeline.dart` — completo.
+- `mobile/lib/features/inspection/domain/inspection_detail_cubit.dart` — completo.
+- `mobile/lib/features/inspection/domain/inspection_detail_state.dart` — completo.
+- `mobile/lib/features/inspection/presentation/widgets/inspection_card.dart` — navegação e Hero adicionados.
+- `mobile/lib/features/inspection/presentation/widgets/severity_badge.dart` — suporte a `isLarge` adicionado.
+- `mobile/lib/shared/models/audit_log.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — Cubit registrado.
+- `mobile/lib/app/router.dart` — rota `/:id` configurada com Provider.
+
+### Validadores que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+- Ciclo de navegação (Tap Card -> Detalhe) validado arquiteturalmente.
+
+---
+
+## Task 16
+
+**Data:** 09/06/2026
+
+**Sprint:** 11 - Detalhe da Inspeção + Gerar Laudo
+**Sessão:** Feature de Laudos Técnicos e Refinamentos de UI
+
+### O que foi feito
+
+- **Backend:**
+  - Implementação do endpoint `GET /api/reports/` para listagem de laudos.
+  - Correção de URLs de mídia para o WeasyPrint utilizando endereços internos da rede Docker (`minio:9000`).
+  - Adição do serviço `get_internal_presigned_download_url`.
+- **Mobile - Feature Report:**
+  - Implementação do `ReportRepository` com suporte a polling para geração assíncrona.
+  - Criação do `ReportCubit` e gerenciamento de estados (`loading`, `generating`, `loaded`, `error`).
+  - Desenvolvimento da `ReportListScreen` com campo de busca e listagem paginada.
+  - Criação da `ReportViewerScreen` com download via Dio e integração nativa via `open_filex`.
+  - Widget `_HashBadge` para exibição do hash SHA-256 com fonte `JetBrains Mono`.
+- **Mobile - Refinamentos:**
+  - Adição de **Filter Chips** (Status e Severidade) na lista de inspeções.
+  - Implementação de indicadores de status visual nos cards de inspeção.
+  - Refatoração da Bottom Bar no detalhe para suportar o fluxo "Iniciar Inspeção" -> "Gerar Laudo".
+  - Melhoria no `AiResultCard` com visualização de score e botões de ação simplificados.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/reports.py` — endpoint de listagem adicionado.
+- `mobile/lib/features/report/` — estrutura completa da feature (data, domain, presentation).
+- `mobile/lib/features/inspection/presentation/` — filtros e melhorias de UI.
+- `mobile/lib/shared/models/report.dart` — campo `download_url` adicionado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found.
+- Fluxo de geração de laudo validado: trigger -> polling -> download -> open nativo.
+- Filtros de inspeção funcionando reativamente no Cubit.
+
+### ✅ Checklist de conclusão da Sprint 11
+
+- [✅] Tap em card → detalhe com SliverAppBar hero photo
+- [✅] Timeline exibe histórico de status com dots coloridos
+- [✅] Botão "Gerar Laudo" desabilitado para inspeções abertas
+- [✅] Geração de laudo → PDF abre no visualizador nativo
+- [✅] Tela de Laudos lista laudos com hash JetBrains Mono
+- [✅] 2 commits + tag v0.11.0-inspection-report
+- [✅] Tabela de controle preenchida (Kaio + 09/06/2026)
+- [✅] PROGRESS_MOBILE.md atualizado

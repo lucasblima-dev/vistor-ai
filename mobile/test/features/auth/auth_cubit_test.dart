@@ -15,7 +15,7 @@ void main() {
   late TokenStorage tokenStorage;
   late AuthCubit authCubit;
 
-  final tUser = User(
+  const tUser = User(
     id: '1',
     email: 'test@example.com',
     name: 'Test User',
@@ -42,7 +42,7 @@ void main() {
       act: (cubit) => cubit.login('test@example.com', 'password'),
       expect: () => [
         const AuthState.loading(),
-        AuthState.authenticated(tUser),
+        const AuthState.authenticated(tUser),
       ],
     );
 

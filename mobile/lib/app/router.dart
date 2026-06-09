@@ -9,54 +9,46 @@ import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
-import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
+import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
+import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_detail_screen.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/report_list_screen.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/report_viewer_screen.dart';
+import 'package:vistor_ai_mobile/shared/models/report.dart';
 import 'package:vistor_ai_mobile/shared/widgets/offline_banner.dart';
 
 // ─── Constantes de rota ───────────────────────────────────────────────────────
 
 class AppRoutes {
-  // Auth
-  static const splash             = '/';
-  static const login              = '/login';
-  static const register           = '/register';
+  static const String splash = '/';
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String home = '/inspections';
+  static const String createInspection = '/inspections/create';
+  static String inspection(String id) => '/inspections/$id';
 
-  // Bottom nav (raízes das 4 abas)
-  static const home               = '/inspections';
-  static const map                = '/map';
-  static const reports            = '/reports';
-  static const profile            = '/profile';
+  static const String map = '/map';
+  static const String reports = '/reports';
+  static String report(String id) => '/reports/$id';
 
-  // Inspeções (sub-rotas da aba home)
-  static const createInspection   = '/inspections/create';
-  static const inspectionDetail   = '/inspections/:id';
-
-  // Laudos (sub-rota da aba reports)
-  static const reportDetail       = '/reports/:id';
-
-  // Gestão — fora do shell (manager/admin)
-  static const teamManagement     = '/team';
-  static const exportData         = '/export';
-  static const userManagement     = '/users';
+  static const String profile = '/profile';
+  
+  // Gestão
+  static const String teamManagement = '/team';
+  static const String userManagement = '/users';
+  static const String exportData = '/export';
 
   // Utilitário
-  static const offline            = '/offline';
-
-  // Helpers para rotas com parâmetro
-  static String inspection(String id) => '/inspections/$id';
-  static String report(String id)     => '/reports/$id';
+  static const String offline = '/offline';
 }
 
-// ─── App Scaffold ─────────────────────────────────────────────────────────────
+// ─── Scaffold Principal com Shell (Abas) ──────────────────────────────────────
 
 class AppScaffold extends StatelessWidget {
-  const AppScaffold({
-    required this.navigationShell,
-    Key? key,
-  }) : super(key: key ?? const ValueKey<String>('AppScaffold'));
-
   final StatefulNavigationShell navigationShell;
+
+  const AppScaffold({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
@@ -67,23 +59,23 @@ class AppScaffold extends StatelessWidget {
           Expanded(child: navigationShell),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(LucideIcons.clipboardList),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) => navigationShell.goBranch(index),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(LucideIcons.list),
             label: 'Inspeções',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(LucideIcons.map),
             label: 'Mapa',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(LucideIcons.fileText),
             label: 'Laudos',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(LucideIcons.user),
             label: 'Perfil',
           ),
@@ -93,13 +85,11 @@ class AppScaffold extends StatelessWidget {
   }
 }
 
-// ─── Router Builder ──────────────────────────────────────────────────────────
+// ─── Roteador Principal ──────────────────────────────────────────────────────
 
 class AuthRefreshListenable extends ChangeNotifier {
-  AuthRefreshListenable(AuthCubit cubit) {
-    _subscription = cubit.stream.listen((state) {
-      notifyListeners();
-    });
+  AuthRefreshListenable(AuthCubit authCubit) {
+    _subscription = authCubit.stream.listen((_) => notifyListeners());
   }
 
   late final StreamSubscription _subscription;
@@ -171,9 +161,13 @@ GoRouter buildRouter(AuthCubit authCubit) {
                   ),
                   GoRoute(
                     path: ':id', // /inspections/:id
-                    builder: (context, state) => Scaffold(
-                      body: Center(child: Text('Detalhe da Inspeção ${state.pathParameters['id']}')),
-                    ),
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return BlocProvider(
+                        create: (context) => getIt<InspectionDetailCubit>(param1: id),
+                        child: const InspectionDetailScreen(),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -197,15 +191,19 @@ GoRouter buildRouter(AuthCubit authCubit) {
             routes: [
               GoRoute(
                 path: AppRoutes.reports,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Lista de Laudos')),
-                ),
+                builder: (context, state) => const ReportListScreen(),
                 routes: [
                   GoRoute(
                     path: ':id', // /reports/:id
-                    builder: (context, state) => Scaffold(
-                      body: Center(child: Text('Visualizador de Laudo ${state.pathParameters['id']}')),
-                    ),
+                    builder: (context, state) {
+                      final report = state.extra as Report?;
+                      if (report != null) {
+                        return ReportViewerScreen(report: report);
+                      }
+                      return const Scaffold(
+                        body: Center(child: Text('Erro: Laudo não carregado')),
+                      );
+                    },
                   ),
                 ],
               ),

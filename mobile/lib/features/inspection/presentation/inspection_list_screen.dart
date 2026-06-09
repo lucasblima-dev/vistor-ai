@@ -79,6 +79,25 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
             ),
           ),
 
+          // Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                _buildFilterChip(context, 'Todos', null, isStatus: true),
+                _buildFilterChip(context, 'Aberto', 'open', isStatus: true),
+                _buildFilterChip(context, 'Em Andamento', 'in_progress', isStatus: true),
+                _buildFilterChip(context, 'Resolvido', 'resolved', isStatus: true),
+                const SizedBox(width: 8, child: VerticalDivider(indent: 8, endIndent: 8)),
+                _buildFilterChip(context, 'Crítico', 'critical', isStatus: false, color: Colors.red),
+                _buildFilterChip(context, 'Moderado', 'moderate', isStatus: false, color: Colors.orange),
+                _buildFilterChip(context, 'Baixo', 'low', isStatus: false, color: Colors.green),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
           Expanded(
             child: BlocBuilder<InspectionCubit, InspectionState>(
               builder: (context, state) {
@@ -152,7 +171,14 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
                                         child: SlideAnimation(
                                           verticalOffset: 50.0,
                                           child: FadeInAnimation(
-                                            child: InspectionCard(inspection: filtered[index]),
+                                            child: InspectionCard(
+                                              inspection: filtered[index],
+                                              onTap: () {
+                                                if (context.mounted) {
+                                                  context.read<InspectionCubit>().load();
+                                                }
+                                              },
+                                            ),
                                           ),
                                         ),
                                       );
@@ -178,6 +204,42 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
         backgroundColor: const Color(0xFF3B55E6),
         icon: const Icon(LucideIcons.plus, color: Colors.white),
         label: const Text('Nova Inspeção', style: TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(
+    BuildContext context, 
+    String label, 
+    String? value, 
+    {required bool isStatus, Color? color}
+  ) {
+    final cubit = context.watch<InspectionCubit>();
+    final isSelected = isStatus 
+        ? cubit.currentStatus == value 
+        : cubit.currentSeverity == value;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {
+          if (isStatus) {
+            cubit.filterByStatus(value);
+          } else {
+            cubit.filterBySeverity(value);
+          }
+        },
+        selectedColor: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.2),
+        checkmarkColor: color ?? Theme.of(context).primaryColor,
+        labelStyle: TextStyle(
+          color: isSelected ? (color ?? Theme.of(context).primaryColor) : Colors.grey[700],
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

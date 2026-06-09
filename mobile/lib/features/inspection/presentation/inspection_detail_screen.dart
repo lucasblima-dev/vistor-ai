@@ -1,0 +1,572 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:vistor_ai_mobile/app/theme.dart';
+import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
+import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_state.dart';
+import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/severity_badge.dart';
+import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/status_timeline.dart';
+import 'package:vistor_ai_mobile/shared/models/inspection.dart';
+import 'package:vistor_ai_mobile/shared/widgets/error_state.dart';
+import 'package:vistor_ai_mobile/shared/widgets/loading_state.dart';
+import 'package:vistor_ai_mobile/shared/widgets/glass_card.dart';
+import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
+import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
+import 'package:vistor_ai_mobile/features/report/domain/report_state.dart';
+import 'package:vistor_ai_mobile/shared/widgets/loading_overlay.dart';
+import 'package:go_router/go_router.dart';
+
+class _StatusBadge extends StatelessWidget {
+  final InspectionStatus status;
+
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String label;
+
+    switch (status) {
+      case InspectionStatus.open:
+        color = Colors.blue;
+        label = 'ABERTO';
+        break;
+      case InspectionStatus.inProgress:
+        color = Colors.orange;
+        label = 'EM ANDAMENTO';
+        break;
+      case InspectionStatus.resolved:
+        color = Colors.green;
+        label = 'RESOLVIDO';
+        break;
+      case InspectionStatus.archived:
+        color = Colors.grey;
+        label = 'ARQUIVADO';
+        break;
+      default:
+        color = Colors.grey;
+        label = 'DESCONHECIDO';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class InspectionDetailScreen extends StatefulWidget {
+  const InspectionDetailScreen({super.key});
+
+  @override
+  State<InspectionDetailScreen> createState() => _InspectionDetailScreenState();
+}
+
+class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<InspectionDetailCubit>().load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<InspectionDetailCubit, InspectionDetailState>(
+          listener: (context, state) {
+            state.maybeWhen(
+              loaded: (insp, history, updating, generating, error) {
+                if (error != null) {
+                  showErrorSnackbar(context, error);
+                }
+              },
+              orElse: () {},
+            );
+          },
+        ),
+        BlocListener<ReportCubit, ReportState>(
+          listener: (context, state) {
+            state.maybeWhen(
+              generated: (report) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Laudo técnico gerado com sucesso!'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                context.push('/reports/${report.id}', extra: report);
+              },
+              error: (msg) => showErrorSnackbar(context, msg),
+              orElse: () {},
+            );
+          },
+        ),
+      ],
+      child: BlocBuilder<InspectionDetailCubit, InspectionDetailState>(
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Scaffold(
+                body: state.when(
+                  initial: () => const SizedBox.shrink(),
+                  loading: () => const AppLoadingState(message: 'Carregando detalhes...'),
+                  error: (msg) => AppErrorState(
+                    message: msg,
+                    onRetry: () => context.read<InspectionDetailCubit>().load(),
+                  ),
+                  loaded: (inspection, history, isUpdating, isGenerating, error) => 
+                      _buildContent(context, inspection, history, isUpdating, isGenerating),
+                ),
+                bottomNavigationBar: state.maybeMap(
+                  loaded: (s) => _buildBottomBar(context, s.inspection),
+                  orElse: () => null,
+                ),
+              ),
+              // Overlay de geração de laudo (via ReportCubit)
+              context.watch<ReportCubit>().state.maybeWhen(
+                    generating: () => const AppLoadingOverlay(message: 'Gerando laudo técnico...'),
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context, 
+    Inspection inspection, 
+    List<dynamic> history,
+    bool isUpdating,
+    bool isGenerating,
+  ) {
+    final heroImageUrl = inspection.media.isNotEmpty 
+        ? inspection.media.first.thumbnailUrl ?? '' 
+        : '';
+
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 260,
+          pinned: true,
+          stretch: true,
+          backgroundColor: AppColors.primary,
+          flexibleSpace: FlexibleSpaceBar(
+            stretchModes: const [StretchMode.zoomBackground],
+            centerTitle: false,
+            titlePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    SeverityBadge(
+                      severity: inspection.severity ?? InspectionSeverity.pendingReview,
+                      isLarge: true,
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(status: inspection.status),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  inspection.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                Hero(
+                  tag: 'inspection-${inspection.id}',
+                  child: heroImageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: heroImageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[300]),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(LucideIcons.imageOff, color: Colors.grey),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          child: const Icon(LucideIcons.image, size: 64, color: AppColors.primary),
+                        ),
+                ),
+                // Gradient Overlay
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black],
+                      stops: [0.3, 1.0],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoGrid(context, inspection),
+                const SizedBox(height: AppSpacing.xl),
+                if (inspection.aiLabel != null) ...[
+                  _buildAiAnalysisSection(context, inspection, isUpdating),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
+                if (inspection.media.isNotEmpty) ...[
+                  _buildMediaSection(context, inspection),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
+                const Text(
+                  'Linha do Tempo',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                StatusTimeline(
+                  history: history.cast(),
+                  currentStatus: inspection.status,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoGrid(BuildContext context, Inspection inspection) {
+    final hasAddress = inspection.address != null && inspection.address!.trim().isNotEmpty;
+    final displayAddress = hasAddress ? inspection.address! : 'Endereço não disponível';
+    
+    final locationStr = '$displayAddress\n(${inspection.lat.toStringAsFixed(4)}, ${inspection.lon.toStringAsFixed(4)})';
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            _buildInfoItem(
+              context, 
+              LucideIcons.mapPin, 
+              'Localização', 
+              locationStr,
+            ),
+            _buildInfoItem(
+              context, 
+              _getCategoryIcon(inspection.category), 
+              'Categoria', 
+              inspection.category,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Row(
+          children: [
+            _buildInfoItem(
+              context, 
+              LucideIcons.calendar, 
+              'Data', 
+              DateFormat('dd/MM/yyyy').format(inspection.createdAt),
+            ),
+            _buildInfoItem(
+              context, 
+              LucideIcons.user, 
+              'Inspetor', 
+              inspection.inspector?.name ?? 'Não atribuído',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(BuildContext context, IconData icon, String label, String value) {
+    return Expanded(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiAnalysisSection(BuildContext context, Inspection inspection, bool isUpdating) {
+    final score = inspection.aiScore ?? 0.0;
+    final color = _getScoreColor(score);
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.bot, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'Análise de Inteligência Artificial',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'A IA identificou: ${inspection.aiLabel}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: score,
+                  backgroundColor: color.withValues(alpha: 0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${(score * 100).toStringAsFixed(0)}%',
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          if (inspection.humanLabel == null) ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: isUpdating ? null : () => _showCorrectionDialog(context),
+                    child: const Text('Corrigir'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isUpdating ? null : () => context.read<InspectionDetailCubit>().confirmAiLabel(),
+                    child: const Text('Confirmar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMediaSection(BuildContext context, Inspection inspection) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Mídias Registradas',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+          ),
+          itemCount: inspection.media.length,
+          itemBuilder: (context, index) {
+            final media = inspection.media[index];
+            return GestureDetector(
+              onTap: () {
+                // TODO: Abrir viewer de imagem/vídeo
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: media.thumbnailUrl ?? '',
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: Colors.grey[200]),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(LucideIcons.imageOff, color: Colors.grey),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context, Inspection inspection) {
+    final reportState = context.watch<ReportCubit>().state;
+    final isGenerating = reportState.maybeWhen(generating: () => true, orElse: () => false);
+
+    final isUpdating = context.watch<InspectionDetailCubit>().state.maybeMap(
+      loaded: (s) => s.isUpdatingStatus,
+      orElse: () => false,
+    );
+
+    final canGenerate = inspection.status == InspectionStatus.inProgress || 
+                       inspection.status == InspectionStatus.resolved;
+
+    final isOpen = inspection.status == InspectionStatus.open;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: (isUpdating || isGenerating) 
+                ? null 
+                : (isOpen 
+                    ? () => context.read<InspectionDetailCubit>().updateStatus(InspectionStatus.inProgress)
+                    : (canGenerate 
+                        ? () => context.read<ReportCubit>().generate(inspection.id) 
+                        : null)),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: isOpen ? AppColors.primary : null,
+            ),
+            child: (isUpdating || isGenerating)
+                ? const SizedBox(
+                    height: 20, width: 20, 
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(isOpen ? 'Iniciar Inspeção' : 'Gerar Laudo Técnico'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 0.8) return AppColors.success;
+    if (score >= 0.55) return AppColors.offline;
+    return AppColors.error;
+  }
+
+  void _showCorrectionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Corrigir Severidade'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSeverityOption(dialogContext, context, 'CRÍTICA', InspectionSeverity.critical, AppColors.error),
+            const SizedBox(height: 8),
+            _buildSeverityOption(dialogContext, context, 'MODERADA', InspectionSeverity.moderate, AppColors.offline),
+            const SizedBox(height: 8),
+            _buildSeverityOption(dialogContext, context, 'BAIXA', InspectionSeverity.low),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeverityOption(
+    BuildContext dialogContext, 
+    BuildContext screenContext, 
+    String label, 
+    InspectionSeverity severity, 
+    [Color? color]
+  ) {
+    final effectiveColor = color ?? AppColors.success;
+    return ListTile(
+      title: Text(label, style: TextStyle(color: effectiveColor, fontWeight: FontWeight.bold)),
+      onTap: () {
+        screenContext.read<InspectionDetailCubit>().correctAiLabel(severity);
+        Navigator.pop(dialogContext);
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      tileColor: effectiveColor.withValues(alpha: 0.1),
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'elétrica':
+        return LucideIcons.zap;
+      case 'civil':
+        return LucideIcons.building;
+      case 'hidráulica':
+        return LucideIcons.droplets;
+      case 'estrutural':
+        return LucideIcons.construction;
+      case 'incêndio':
+        return LucideIcons.flame;
+      default:
+        return LucideIcons.clipboardList;
+    }
+  }
+}

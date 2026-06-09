@@ -5,6 +5,7 @@ import 'package:vistor_ai_mobile/core/api/endpoints.dart';
 import 'package:vistor_ai_mobile/core/local/database.dart';
 import 'package:vistor_ai_mobile/core/local/inspection_dao.dart';
 import 'package:vistor_ai_mobile/shared/models/inspection.dart';
+import 'package:vistor_ai_mobile/shared/models/audit_log.dart';
 
 class InspectionRepository {
   final ApiClient _apiClient;
@@ -16,10 +17,11 @@ class InspectionRepository {
   })  : _apiClient = apiClient,
         _inspectionDao = inspectionDao;
 
-  Future<List<Inspection>> getAll({String? status, String? cursor}) async {
+  Future<List<Inspection>> getAll({String? status, String? severity, String? cursor}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (status != null) queryParams['status'] = status;
+      if (severity != null) queryParams['severity'] = severity;
       if (cursor != null) queryParams['cursor'] = cursor;
 
       final response = await _apiClient.dio.get(
@@ -57,6 +59,41 @@ class InspectionRepository {
     }
   }
 
+  Future<List<AuditLog>> getHistory(String id) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/audit-logs/',
+        queryParameters: {
+          'entity': 'inspection',
+          'entity_id': id,
+          'limit': 50,
+        },
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => AuditLog.fromJson(json)).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> generateReport(String inspectionId) async {
+    try {
+      final response = await _apiClient.dio.post(
+        AppEndpoints.generateReport,
+        data: {'inspection_id': inspectionId},
+      );
+      if (response.statusCode != 202 && response.statusCode != 200) {
+        throw Exception('Erro ao disparar geração de laudo');
+      }
+    } on DioException catch (e) {
+      final message = e.response?.data['detail'] ?? 'Erro ao disparar geração de laudo';
+      throw Exception(message);
+    }
+  }
+
   Future<Inspection> create(InspectionCreate payload, {required String inspectorId}) async {
     try {
       final response = await _apiClient.dio.post(
@@ -82,6 +119,7 @@ class InspectionRepository {
             lat: payload.lat,
             lon: payload.lon,
             gpsAccuracy: Value(payload.gpsAccuracy),
+            address: Value(payload.address),
             createdAt: DateTime.now(),
             isSynced: const Value(false),
             status: const Value('draft'),
@@ -96,6 +134,7 @@ class InspectionRepository {
           description: payload.description,
           location: LocationPoint(lat: payload.lat, lon: payload.lon),
           gpsAccuracy: payload.gpsAccuracy,
+          address: payload.address,
           status: InspectionStatus.draft,
           isSynced: false,
           createdAt: DateTime.now(),
@@ -126,15 +165,10 @@ class InspectionRepository {
           payload.severity?.name,
           payload.humanLabel,
         );
-
-        // Retornamos uma versão local (parcial) se necessário
-        // Mas o ideal é recarregar da lista local
       }
       rethrow;
     }
   }
-
-  // Mapeamento auxiliar...
 
   Inspection _mapLocalToInspection(dynamic local) {
     return Inspection(
@@ -145,6 +179,7 @@ class InspectionRepository {
       description: local.description,
       location: LocationPoint(lat: local.lat, lon: local.lon),
       gpsAccuracy: local.gpsAccuracy,
+      address: local.address,
       status: _mapStatus(local.status),
       severity: _mapSeverity(local.severity),
       isSynced: local.isSynced,

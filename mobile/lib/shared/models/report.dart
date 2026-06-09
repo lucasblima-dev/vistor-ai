@@ -13,6 +13,7 @@ abstract class Report with _$Report {
     required String sha256,
     @JsonKey(name: 'signature_key') String? signatureKey,
     @JsonKey(name: 'created_at') required DateTime createdAt,
+    @JsonKey(name: 'download_url') String? downloadUrl,
   }) = _Report;
 
   factory Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);

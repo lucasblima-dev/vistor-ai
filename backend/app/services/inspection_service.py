@@ -5,6 +5,7 @@ from sqlalchemy import select, update as sa_update, and_, or_, desc, func as sa_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
+import httpx
 
 from app.models.inspection import Inspection, InspectionStatus
 from app.models.user import User, UserRole
@@ -24,10 +25,28 @@ async def _populate_media_urls(inspections: List[Inspection] | Inspection):
             if m.thumbnail_key:
                 m.thumbnail_url = await storage_service.get_presigned_download_url("thumbnails", m.thumbnail_key)
 
+async def _reverse_geocode(lat: float, lon: float) -> Optional[str]:
+    """Tenta obter o endereço via Nominatim (OSM) se o mobile não enviar."""
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+    headers = {"User-Agent": "VistorAI/1.0"}
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("display_name")
+    except Exception:
+        pass
+    return None
+
 async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) -> Inspection:
     # Converte lat/lon para WKT (Longitude primeiro no WKT POINT)
     wkt_point = f"POINT({payload.lon} {payload.lat})"
     
+    address = payload.address
+    if not address or address == "Endereço não encontrado":
+        address = await _reverse_geocode(payload.lat, payload.lon)
+
     inspection = Inspection(
         inspector_id=owner_id,
         title=payload.title,
@@ -35,6 +54,7 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) ->
         description=payload.description,
         location=ST_GeomFromText(wkt_point, srid=4326),
         gps_accuracy=payload.gps_accuracy if payload.gps_accuracy is not None else 0.0,
+        address=address,
         status=InspectionStatus.open
     )
     

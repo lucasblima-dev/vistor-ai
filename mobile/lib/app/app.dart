@@ -6,6 +6,7 @@ import 'package:vistor_ai_mobile/app/router.dart';
 import 'package:vistor_ai_mobile/core/di/service_locator.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
+import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
 
 class VistorApp extends StatefulWidget {
   const VistorApp({super.key});
@@ -29,6 +30,7 @@ class _VistorAppState extends State<VistorApp> {
       providers: [
         BlocProvider.value(value: _authCubit),
         BlocProvider(create: (context) => getIt<InspectionCubit>()),
+        BlocProvider(create: (context) => getIt<ReportCubit>()),
       ],
       child: MaterialApp.router(
         title: 'Vistor AI',
