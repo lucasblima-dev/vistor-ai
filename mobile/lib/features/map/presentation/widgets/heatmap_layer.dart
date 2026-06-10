@@ -14,12 +14,14 @@ class HeatmapLayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final camera = MapCamera.of(context);
     
-    return Opacity(
-      opacity: 0.7,
-      child: RepaintBoundary(
-        child: CustomPaint(
-          size: Size(camera.size.x, camera.size.y),
-          painter: _HeatmapPainter(camera: camera, points: points),
+    return MobileLayerTransformer(
+      child: Opacity(
+        opacity: 0.7,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            size: Size(camera.size.x, camera.size.y),
+            painter: _HeatmapPainter(camera: camera, points: points),
+          ),
         ),
       ),
     );
@@ -34,13 +36,15 @@ class _HeatmapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.clipRect(rect);
+
     final renderPoints = points.take(200).toList();
 
     for (final point in renderPoints) {
       final latLng = LatLng(point.latitude, point.longitude);
       
-      final screenPoint = camera.latLngToScreenPoint(latLng);
-      final offset = Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+      final offset = camera.getOffsetFromOrigin(latLng);
 
       if (offset.dx < -100 || offset.dx > size.width + 100 ||
           offset.dy < -100 || offset.dy > size.height + 100) {
