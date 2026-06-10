@@ -698,3 +698,51 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - [✅] 3 commits + tag v0.12.0-map
 - [✅] Tabela de controle preenchida
 - [✅] PROGRESS_MOBILE.md atualizado
+
+---
+
+## Task 20
+
+**Data:** 09/06/2026
+
+**Sprint:** 13 - Laudos + Perfil + Offline
+**Sessão:** 13.1 — Profile Screen
+
+### O que foi feito
+
+- Implementação da `ProfileScreen` seguindo o Layout 8.5 do `LAYOUT.md`.
+- Criação do `ThemeService` com Hive para persistência da preferência de tema (Dark/Light/System).
+- Integração do `ValueNotifier<ThemeMode>` no `service_locator.dart` e `app.dart` para troca de tema reativa.
+- Exibição de dados reais do usuário (`AuthCubit`) e cargo dinâmico no header premium com gradiente.
+- Seção de sincronização com contador de pendências em tempo real via `StreamBuilder`.
+- Fluxo de logout com `BottomSheet` de confirmação e limpeza de estado.
+
+### Validações que passaram
+
+- Troca de tema funciona instantaneamente sem perda de estado de navegação.
+- Logout redireciona corretamente para a tela de login.
+
+---
+
+## Task 21
+
+**Data:** 09/06/2026
+
+**Sprint:** 13 - Laudos + Perfil + Offline
+**Sessão:** 13.2 — Offline Screen
+
+### O que foi feito
+
+- Implementação da `OfflineScreen` seguindo o Layout 8.12 com ícones amber e animação `Pulse`.
+- Atualização do `GoRouter` (`router.dart`) com lógica de redirecionamento para funcionalidades dependentes de rede (Mapa, Laudos, Gestão) quando não há conexão.
+- Garantia de acesso offline à Home (Minhas Inspeções) para consulta de dados em cache.
+- Refatoração do `SyncManager` para assegurar o envio de todos os campos obrigatórios na sincronização.
+- Correção de bug no roteador que reiniciava a navegação durante a alteração de tema.
+
+### Validações que passaram
+
+- Redirecionamento automático para a tela Offline ao tentar acessar Mapa/Laudos sem internet.
+- Sincronização manual via Perfil com feedback de `SnackBar`.
+- Animação de `sparkles` pulsando corretamente.
+
+---
