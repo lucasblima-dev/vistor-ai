@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
 import 'package:vistor_ai_mobile/app/router.dart';
 import 'package:vistor_ai_mobile/core/di/service_locator.dart';
@@ -18,11 +19,13 @@ class VistorApp extends StatefulWidget {
 
 class _VistorAppState extends State<VistorApp> {
   late final AuthCubit _authCubit;
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     _authCubit = getIt<AuthCubit>()..checkAuth();
+    _router = buildRouter(_authCubit);
   }
 
   @override
@@ -34,22 +37,27 @@ class _VistorAppState extends State<VistorApp> {
         BlocProvider(create: (context) => getIt<ReportCubit>()),
         BlocProvider(create: (context) => getIt<MapCubit>()),
       ],
-      child: MaterialApp.router(
-        title: 'Vistor AI',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system,
-        theme: lightTheme(),
-        darkTheme: darkTheme(),
-        locale: const Locale('pt', 'BR'),
-        routerConfig: buildRouter(_authCubit),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('pt', 'BR'),
-        ],
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: getIt<ValueNotifier<ThemeMode>>(),
+        builder: (context, mode, _) {
+          return MaterialApp.router(
+            title: 'Vistor AI',
+            debugShowCheckedModeBanner: false,
+            themeMode: mode,
+            theme: lightTheme(),
+            darkTheme: darkTheme(),
+            locale: const Locale('pt', 'BR'),
+            routerConfig: _router,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('pt', 'BR'),
+            ],
+          );
+        },
       ),
     );
   }

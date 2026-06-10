@@ -12,6 +12,8 @@ class SyncManager {
 
   SyncManager(this._apiClient, this._inspectionDao);
 
+  Stream<int> get pendingCount => _inspectionDao.watchPendingCount();
+
   void startListening() {
     _subscription = _connectivity.onConnectivityChanged.listen((result) {
       if (result != ConnectivityResult.none) {

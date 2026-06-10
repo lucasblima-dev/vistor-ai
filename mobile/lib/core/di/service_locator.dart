@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:vistor_ai_mobile/core/api/api_client.dart';
 import 'package:vistor_ai_mobile/core/api/token_storage.dart';
 import 'package:vistor_ai_mobile/core/local/database.dart';
 import 'package:vistor_ai_mobile/core/local/inspection_dao.dart';
+import 'package:vistor_ai_mobile/core/local/sync_manager.dart';
+import 'package:vistor_ai_mobile/core/services/theme_service.dart';
 import 'package:vistor_ai_mobile/features/auth/data/auth_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
@@ -19,6 +22,13 @@ import 'package:vistor_ai_mobile/core/services/media_service.dart';
 final getIt = GetIt.instance;
 
 Future<void> setupLocator() async {
+  // Services
+  final themeService = await ThemeService.init();
+  getIt.registerSingleton<ThemeService>(themeService);
+  getIt.registerSingleton<ValueNotifier<ThemeMode>>(
+    ValueNotifier(themeService.themeMode),
+  );
+
   // Database
   final database = AppDatabase();
   getIt.registerSingleton<AppDatabase>(database);
@@ -30,6 +40,10 @@ Future<void> setupLocator() async {
   
   final apiClient = ApiClient();
   getIt.registerSingleton<ApiClient>(apiClient);
+
+  getIt.registerSingleton<SyncManager>(
+    SyncManager(apiClient, database.inspectionDao)..startListening(),
+  );
 
   getIt.registerLazySingleton<MediaService>(
     () => MediaService(getIt<ApiClient>()),

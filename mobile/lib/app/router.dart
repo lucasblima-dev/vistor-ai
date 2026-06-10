@@ -7,6 +7,7 @@ import 'package:vistor_ai_mobile/core/di/service_locator.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/profile_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
@@ -214,9 +215,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Perfil do Usuário')),
-                ),
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),

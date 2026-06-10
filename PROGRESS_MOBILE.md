@@ -698,4 +698,3 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - [✅] 3 commits + tag v0.12.0-map
 - [✅] Tabela de controle preenchida
 - [✅] PROGRESS_MOBILE.md atualizado
-

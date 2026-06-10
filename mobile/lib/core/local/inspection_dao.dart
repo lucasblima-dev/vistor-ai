@@ -15,6 +15,12 @@ class InspectionDao extends DatabaseAccessor<AppDatabase> with _$InspectionDaoMi
     return (select(localInspections)..where((t) => t.isSynced.equals(false))).get();
   }
 
+  Stream<int> watchPendingCount() {
+    return (select(localInspections)..where((t) => t.isSynced.equals(false)))
+        .watch()
+        .map((list) => list.length);
+  }
+
   Future<void> markAsSynced(int localId, String remoteId) {
     return (update(localInspections)..where((t) => t.id.equals(localId))).write(
       LocalInspectionsCompanion(
