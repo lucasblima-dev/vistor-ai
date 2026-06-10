@@ -13,6 +13,7 @@ import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cu
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_detail_screen.dart';
+import 'package:vistor_ai_mobile/features/map/presentation/map_screen.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/report_list_screen.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/report_viewer_screen.dart';
 import 'package:vistor_ai_mobile/shared/models/report.dart';
@@ -179,9 +180,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             routes: [
               GoRoute(
                 path: AppRoutes.map,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Mapa / Heatmap')),
-                ),
+                builder: (context, state) => const MapScreen(),
               ),
             ],
           ),

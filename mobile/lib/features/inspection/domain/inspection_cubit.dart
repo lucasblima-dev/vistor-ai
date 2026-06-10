@@ -43,6 +43,12 @@ class InspectionCubit extends Cubit<InspectionState> {
     load();
   }
 
+  void clearFilters() {
+    _currentStatus = null;
+    _currentSeverity = null;
+    load();
+  }
+
   String? get currentStatus => _currentStatus;
   String? get currentSeverity => _currentSeverity;
 }

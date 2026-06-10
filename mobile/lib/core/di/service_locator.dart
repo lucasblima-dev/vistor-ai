@@ -9,6 +9,8 @@ import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.
 import 'package:vistor_ai_mobile/features/inspection/domain/create_inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
+import 'package:vistor_ai_mobile/features/map/data/map_repository.dart';
+import 'package:vistor_ai_mobile/features/map/domain/map_cubit.dart';
 import 'package:vistor_ai_mobile/features/report/data/report_repository.dart';
 import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
 import 'package:vistor_ai_mobile/core/services/gps_service.dart';
@@ -54,6 +56,10 @@ Future<void> setupLocator() async {
     () => ReportRepository(apiClient: getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<MapRepository>(
+    () => MapRepository(apiClient: getIt<ApiClient>()),
+  );
+
   // Cubits
   getIt.registerFactory<AuthCubit>(
     () => AuthCubit(
@@ -85,5 +91,12 @@ Future<void> setupLocator() async {
 
   getIt.registerFactory<ReportCubit>(
     () => ReportCubit(repository: getIt<ReportRepository>()),
+  );
+
+  getIt.registerFactory<MapCubit>(
+    () => MapCubit(
+      repository: getIt<MapRepository>(),
+      gpsService: getIt<GpsService>(),
+    ),
   );
 }

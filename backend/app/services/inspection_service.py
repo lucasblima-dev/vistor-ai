@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 import httpx
 
-from app.models.inspection import Inspection, InspectionStatus
+from app.models.inspection import Inspection, InspectionStatus, InspectionSeverity
 from app.models.user import User, UserRole
 from app.schemas.inspection import InspectionCreate, InspectionUpdate
 from app.services import audit_service, storage_service
@@ -106,6 +106,7 @@ async def list_by_user(
     db: AsyncSession, 
     current_user: User, 
     status_filter: Optional[InspectionStatus] = None, 
+    severity_filter: Optional[InspectionSeverity] = None,
     limit: int = 20, 
     cursor: Optional[datetime] = None
 ) -> List[Inspection]:
@@ -124,6 +125,9 @@ async def list_by_user(
     
     if status_filter:
         query = query.where(Inspection.status == status_filter)
+        
+    if severity_filter:
+        query = query.where(Inspection.severity == severity_filter)
         
     if cursor:
         query = query.where(Inspection.created_at < cursor)

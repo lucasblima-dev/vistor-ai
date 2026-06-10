@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.auth import get_current_user
 from app.dependencies.db import get_db
 from app.models.user import User
-from app.models.inspection import InspectionStatus
+from app.models.inspection import InspectionStatus, InspectionSeverity
 from app.schemas.inspection import InspectionCreate, InspectionUpdate, InspectionOut
 from app.services import inspection_service
 
@@ -24,6 +24,7 @@ async def create_inspection(
 @router.get("/", response_model=List[InspectionOut])
 async def list_inspections(
     status: Optional[InspectionStatus] = None,
+    severity: Optional[InspectionSeverity] = None,
     limit: int = Query(20, ge=1, le=100),
     cursor: Optional[datetime] = None,
     db: AsyncSession = Depends(get_db),
@@ -33,6 +34,7 @@ async def list_inspections(
         db, 
         current_user=user, 
         status_filter=status, 
+        severity_filter=severity,
         limit=limit, 
         cursor=cursor
     )

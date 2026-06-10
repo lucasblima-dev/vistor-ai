@@ -7,10 +7,12 @@ import 'package:vistor_ai_mobile/app/router.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_state.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/inspection_card.dart';
+import 'package:vistor_ai_mobile/features/map/domain/map_cubit.dart';
 import 'package:vistor_ai_mobile/shared/widgets/empty_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/error_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/loading_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/sync_indicator.dart';
+import 'package:vistor_ai_mobile/shared/models/inspection.dart';
 
 class InspectionListScreen extends StatefulWidget {
   const InspectionListScreen({super.key});
@@ -113,11 +115,34 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
                     subtitle: 'Você ainda não registrou nenhuma ocorrência.',
                   ),
                   loaded: (inspections) {
+                    final cubitStatus = context.read<InspectionCubit>().currentStatus;
+                    final cubitSeverity = context.read<InspectionCubit>().currentSeverity;
+
                     final filtered = inspections.where((i) {
+                      // Filter by status
+                      if (cubitStatus != null) {
+                        if (cubitStatus == 'open' && i.status != InspectionStatus.open) return false;
+                        if (cubitStatus == 'in_progress' && i.status != InspectionStatus.inProgress) return false;
+                        if (cubitStatus == 'resolved' && i.status != InspectionStatus.resolved) return false;
+                      }
+
+                      // Filter by severity
+                      if (cubitSeverity != null) {
+                        if (cubitSeverity == 'critical' && i.severity != InspectionSeverity.critical) return false;
+                        if (cubitSeverity == 'moderate' && i.severity != InspectionSeverity.moderate) return false;
+                        if (cubitSeverity == 'low' && i.severity != InspectionSeverity.low) return false;
+                      }
+
+                      // Search query filter
                       final query = _searchController.text.toLowerCase();
-                      return i.category.toLowerCase().contains(query) ||
-                             (i.description?.toLowerCase().contains(query) ?? false) ||
-                             (i.address?.toLowerCase().contains(query) ?? false);
+                      if (query.isNotEmpty) {
+                        return i.category.toLowerCase().contains(query) ||
+                               (i.description?.toLowerCase().contains(query) ?? false) ||
+                               (i.address?.toLowerCase().contains(query) ?? false) ||
+                               i.title.toLowerCase().contains(query);
+                      }
+                      
+                      return true;
                     }).toList();
 
                     return Column(
@@ -176,6 +201,7 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
                                               onTap: () {
                                                 if (context.mounted) {
                                                   context.read<InspectionCubit>().load();
+                                                  context.read<MapCubit>().loadMap();
                                                 }
                                               },
                                             ),
@@ -215,9 +241,17 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
     {required bool isStatus, Color? color}
   ) {
     final cubit = context.watch<InspectionCubit>();
-    final isSelected = isStatus 
-        ? cubit.currentStatus == value 
-        : cubit.currentSeverity == value;
+    
+    final bool isSelected;
+    if (label == 'Todos') {
+      isSelected = cubit.currentStatus == null && cubit.currentSeverity == null;
+    } else {
+      isSelected = isStatus 
+          ? cubit.currentStatus == value 
+          : cubit.currentSeverity == value;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
@@ -225,21 +259,28 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
         label: Text(label),
         selected: isSelected,
         onSelected: (selected) {
-          if (isStatus) {
-            cubit.filterByStatus(value);
+          if (label == 'Todos') {
+            cubit.clearFilters();
           } else {
-            cubit.filterBySeverity(value);
+            if (isStatus) {
+              cubit.filterByStatus(selected ? value : null);
+            } else {
+              cubit.filterBySeverity(selected ? value : null);
+            }
           }
         },
-        selectedColor: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.2),
-        checkmarkColor: color ?? Theme.of(context).primaryColor,
+        selectedColor: color ?? Theme.of(context).primaryColor,
+        checkmarkColor: Colors.white,
         labelStyle: TextStyle(
-          color: isSelected ? (color ?? Theme.of(context).primaryColor) : Colors.grey[700],
+          color: isSelected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[700]),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           fontSize: 12,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isSelected ? BorderSide.none : BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+        ),
       ),
     );
   }
