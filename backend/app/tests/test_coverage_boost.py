@@ -19,20 +19,30 @@ from app.schemas.user import UserCreate
 @pytest.mark.asyncio
 async def test_ai_service_map_severity():
     assert ai_service.map_severity(0.4, "any") == "pending_review"
-    assert ai_service.map_severity(0.9, "crack") == "critical"
-    assert ai_service.map_severity(0.7, "crack") == "moderate"
-    assert ai_service.map_severity(0.9, "wall") == "low"
+    assert ai_service.map_severity(0.9, "rachadura crítica") == "critical"
+    assert ai_service.map_severity(0.9, "corrosão de armadura") == "critical"
+    assert ai_service.map_severity(0.7, "infiltração ou umidade") == "moderate"
+    assert ai_service.map_severity(0.9, "estrutura intacta e sem danos") == "low"
+    assert ai_service.map_severity(0.9, "outra coisa") == "low"
 
 @pytest.mark.asyncio
 async def test_ai_service_classify_image_success():
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = [{"label": "crack", "score": 0.9}]
+    mock_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": '{"label": "rachadura crítica", "score": 0.9}'
+                }
+            }
+        ]
+    }
     
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value = mock_response
         result = await ai_service.classify_image(b"fake_image")
-        assert result["label"] == "crack"
+        assert result["label"] == "rachadura crítica"
         assert result["score"] == 0.9
         assert result["source"] == "huggingface"
 

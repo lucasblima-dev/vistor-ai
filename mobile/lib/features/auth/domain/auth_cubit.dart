@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vistor_ai_mobile/core/api/token_storage.dart';
 import 'package:vistor_ai_mobile/core/di/service_locator.dart';
@@ -26,14 +27,27 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       emit(const AuthState.loading());
       final user = await _authRepository.getMe();
+      await _tokenStorage.saveUser(user);
       emit(AuthState.authenticated(user));
       _updateFcmToken();
     } catch (e) {
-      // Se falhar o getMe, tentamos dar refresh antes de deslogar
+      // Se falhar o getMe por indisponibilidade de rede, tenta usar o cache local
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final isOffline = connectivityResult == ConnectivityResult.none || _isConnectionError(e);
+      if (isOffline) {
+        final cachedUser = await _tokenStorage.getUser();
+        if (cachedUser != null) {
+          emit(AuthState.authenticated(cachedUser));
+          return;
+        }
+      }
+
+      // Se falhar o getMe com rede disponível, tentamos dar refresh antes de deslogar
       final refreshed = await _authRepository.refreshToken();
       if (refreshed) {
         try {
           final user = await _authRepository.getMe();
+          await _tokenStorage.saveUser(user);
           emit(AuthState.authenticated(user));
           _updateFcmToken();
           return;
@@ -44,11 +58,21 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  bool _isConnectionError(dynamic error) {
+    if (error is AuthException) {
+      final msg = error.message.toLowerCase();
+      return msg.contains('conectar') || msg.contains('conexão') || msg.contains('servidor');
+    }
+    final errStr = error.toString().toLowerCase();
+    return errStr.contains('connection') || errStr.contains('timeout') || errStr.contains('host') || errStr.contains('network') || errStr.contains('dioexception');
+  }
+
   Future<void> login(String email, String password) async {
     emit(const AuthState.loading());
     try {
       await _authRepository.login(email, password);
       final user = await _authRepository.getMe();
+      await _tokenStorage.saveUser(user);
       emit(AuthState.authenticated(user));
       _updateFcmToken();
     } on AuthException catch (e) {

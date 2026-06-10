@@ -10,3 +10,4 @@ abstract class Env {
   @EnviedField(varName: 'ENVIRONMENT')
   static const String environment = _Env.environment;
 }
+// Force rebuild envied config

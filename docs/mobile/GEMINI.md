@@ -31,6 +31,38 @@
 
 ---
 
+## Setup Local para Desenvolvimento
+
+Se você acabou de clonar o repositório ou limpou o projeto, siga estes passos para rodar o app localmente sem erros:
+
+### 1. Inicializar dependências e gerar código (Obrigatório)
+O app utiliza **Freezed** e **Drift** para geração automática de código. O projeto não compilará antes de gerar esses arquivos. Execute:
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### 2. Configurar o redirecionamento de portas (adb reverse)
+Se você estiver depurando em um **dispositivo físico Android** via USB/WiFi, é necessário que o celular consiga acessar os serviços que rodam no Docker da sua máquina de desenvolvimento (a API FastAPI na porta `8000` e o Storage do MinIO na porta `9000`). Execute:
+```bash
+adb reverse tcp:8000 tcp:8000
+adb reverse tcp:9000 tcp:9000
+```
+> [!IMPORTANT]
+> Se você esquecer de mapear a porta `9000`, a criação de inspeções online falhará com erro de conexão ao tentar enviar imagens para o MinIO.
+
+### 3. Aceitar Licenças do Android
+Caso a máquina de desenvolvimento não tenha as licenças do Android aceitas, o build do Gradle pode travar. Aceite as licenças com:
+```bash
+flutter doctor --android-licenses
+```
+E realize a primeira compilação pelo terminal para baixar os SDKs necessários sem causar timeout na extensão de depuração do VS Code:
+```bash
+flutter build apk --debug
+```
+
+---
+
 ## Estrutura de Pastas
 
 ```

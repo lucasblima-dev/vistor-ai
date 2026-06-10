@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # HuggingFace
     HF_API_KEY: str
-    HF_MODEL_ID: str = "google/vit-base-patch16-224"
+    HF_MODEL_ID: str = "Qwen/Qwen3-VL-8B-Instruct"
     HF_TIMEOUT_SECONDS: int = 10
     HF_CONFIDENCE_THRESHOLD: float = 0.55
 

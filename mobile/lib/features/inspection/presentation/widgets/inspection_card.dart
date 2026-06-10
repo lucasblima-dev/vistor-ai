@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vistor_ai_mobile/app/router.dart';
+import 'package:vistor_ai_mobile/app/theme.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/severity_badge.dart';
 import 'package:vistor_ai_mobile/shared/models/inspection.dart';
 import 'package:intl/intl.dart';
@@ -195,6 +196,17 @@ class _InspectionCardState extends State<InspectionCard> {
               
               SeverityBadge(severity: widget.inspection.severity),
               const SizedBox(width: 8),
+              if (!widget.inspection.isSynced) ...[
+                const Tooltip(
+                  message: 'Pendente de sincronização',
+                  child: Icon(
+                    LucideIcons.cloudOff,
+                    color: AppColors.offline,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               _StatusIndicator(status: widget.inspection.status),
             ],
           ),

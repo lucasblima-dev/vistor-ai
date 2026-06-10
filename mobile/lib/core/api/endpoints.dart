@@ -4,7 +4,7 @@ class AppEndpoints {
   static const String register = '/auth/register';
   static const String refresh = '/auth/refresh';
   static const String logout = '/auth/logout';
-  static const String me = '/users/me';
+  static const String me = '/auth/me';
   static const String fcmToken = '/users/me/fcm-token';
 
   // Inspections

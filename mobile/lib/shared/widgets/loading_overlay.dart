@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:vistor_ai_mobile/app/theme.dart';
+//import 'package:vistor_ai_mobile/app/theme.dart';
 
 class AppLoadingOverlay extends StatelessWidget {
   final String? message;
-  
+
   const AppLoadingOverlay({super.key, this.message});
 
   @override

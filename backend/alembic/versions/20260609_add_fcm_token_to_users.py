@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20260609_add_fcm_token_to_users'
-down_revision = '20260604_3a009ec2d0ee_add_title_to_inspections'
+down_revision = '3a009ec2d0ee'
 branch_labels = None
 depends_on = None
 

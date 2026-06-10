@@ -3,7 +3,7 @@ import 'package:vistor_ai_mobile/core/local/database.dart';
 
 part 'inspection_dao.g.dart';
 
-@DriftAccessor(tables: [LocalInspections])
+@DriftAccessor(tables: [LocalInspections, LocalMedia])
 class InspectionDao extends DatabaseAccessor<AppDatabase> with _$InspectionDaoMixin {
   InspectionDao(super.db);
 
@@ -51,5 +51,17 @@ class InspectionDao extends DatabaseAccessor<AppDatabase> with _$InspectionDaoMi
         ),
       );
     }
+  }
+
+  Future<int> insertLocalMedia(LocalMediaCompanion companion) {
+    return into(localMedia).insert(companion);
+  }
+
+  Future<List<LocalMediaData>> getMediaForInspection(String localInspectionId) {
+    return (select(localMedia)..where((t) => t.localInspectionId.equals(localInspectionId))).get();
+  }
+
+  Future<void> deleteMediaForInspection(String localInspectionId) {
+    return (delete(localMedia)..where((t) => t.localInspectionId.equals(localInspectionId))).go();
   }
 }

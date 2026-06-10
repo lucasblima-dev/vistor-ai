@@ -354,11 +354,11 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(LucideIcons.bot, color: AppColors.primary),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(LucideIcons.bot, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
                 'Análise de Inteligência Artificial',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),

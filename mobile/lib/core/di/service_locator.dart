@@ -43,10 +43,6 @@ Future<void> setupLocator() async {
   final apiClient = ApiClient();
   getIt.registerSingleton<ApiClient>(apiClient);
 
-  getIt.registerSingleton<SyncManager>(
-    SyncManager(apiClient, database.inspectionDao)..startListening(),
-  );
-
   getIt.registerLazySingleton<MediaService>(
     () => MediaService(getIt<ApiClient>()),
   );
@@ -74,6 +70,14 @@ Future<void> setupLocator() async {
 
   getIt.registerLazySingleton<MapRepository>(
     () => MapRepository(apiClient: getIt<ApiClient>()),
+  );
+
+  getIt.registerLazySingleton<SyncManager>(
+    () => SyncManager(
+      getIt<ApiClient>(),
+      getIt<InspectionDao>(),
+      getIt<MediaService>(),
+    ),
   );
 
   // Cubits

@@ -170,6 +170,15 @@ class InspectionRepository {
     }
   }
 
+  Future<void> saveLocalMedia(String localInspectionId, String filePath) async {
+    await _inspectionDao.insertLocalMedia(
+      LocalMediaCompanion.insert(
+        localInspectionId: localInspectionId,
+        filePath: filePath,
+      ),
+    );
+  }
+
   Inspection _mapLocalToInspection(dynamic local) {
     return Inspection(
       id: local.remoteId ?? 'local_${local.id}',

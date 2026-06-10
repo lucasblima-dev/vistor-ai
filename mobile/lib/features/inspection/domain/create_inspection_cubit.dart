@@ -108,6 +108,18 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
 
       final inspection = await _repository.create(payload, inspectorId: inspectorId);
       
+      if (inspection.id.startsWith('local_')) {
+        for (var photo in state.photos) {
+          await _repository.saveLocalMedia(inspection.id, photo.path);
+        }
+        emit(state.copyWith(
+          isSubmitting: false,
+          isUploadingMedia: false,
+          isCompleted: true,
+        ));
+        return;
+      }
+      
       // Upload media
       emit(state.copyWith(isUploadingMedia: true));
       for (var photo in state.photos) {

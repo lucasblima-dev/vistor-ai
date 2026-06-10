@@ -24,12 +24,19 @@ class LocalInspections extends Table {
   DateTimeColumn get createdAt => dateTime()();
 }
 
-@DriftDatabase(tables: [LocalInspections], daos: [InspectionDao])
+@DataClassName('LocalMediaData')
+class LocalMedia extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get localInspectionId => text()();
+  TextColumn get filePath => text()();
+}
+
+@DriftDatabase(tables: [LocalInspections, LocalMedia], daos: [InspectionDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -40,6 +47,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 3) {
           await m.addColumn(localInspections, localInspections.address);
+        }
+        if (from < 4) {
+          await m.createTable(localMedia);
         }
       },
     );

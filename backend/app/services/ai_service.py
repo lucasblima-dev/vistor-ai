@@ -1,4 +1,6 @@
 import logging
+import base64
+import json
 import uuid
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,21 +23,55 @@ async def _classify_local_fallback(image_bytes: bytes) -> dict:
     }
 
 async def classify_image(image_bytes: bytes) -> dict:
-    # A URL para o novo router deve terminar com o ID do modelo sem barra adicional se já estiver no path
-    url = f"https://router.huggingface.co/hf-inference/models/{settings.HF_MODEL_ID}"
+    url = "https://router.huggingface.co/v1/chat/completions"
     
-    # Headers obrigatórios para o novo sistema de roteamento
     headers = {
         "Authorization": f"Bearer {settings.HF_API_KEY}",
-        "Content-Type": "image/jpeg",  # Força o tipo de conteúdo para imagens
-        "x-wait-for-model": "true"      # Instrução para o router esperar o carregamento do modelo
+        "Content-Type": "application/json"
+    }
+    
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    
+    prompt = (
+        "Classifique a severidade e o tipo de dano estrutural desta imagem de inspeção técnica.\n"
+        "Categorias possíveis:\n"
+        "1. 'rachadura crítica'\n"
+        "2. 'infiltração ou umidade'\n"
+        "3. 'corrosão de armadura'\n"
+        "4. 'estrutura intacta e sem danos'\n\n"
+        "Retorne a resposta EXCLUSIVAMENTE em formato JSON puro, sem blocos de código ```json ou qualquer outro texto adicional. "
+        "O JSON deve conter os campos 'label' (exatamente igual a uma das categorias acima) e 'score' (um float de confiança entre 0.0 e 1.0).\n"
+        "Exemplo:\n"
+        "{\"label\": \"infiltração ou umidade\", \"score\": 0.95}"
+    )
+
+    payload = {
+        "model": settings.HF_MODEL_ID,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_b64}"
+                        }
+                    }
+                ]
+            }
+        ],
+        "max_tokens": 100,
+        "temperature": 0.0
     }
     
     try:
         async with httpx.AsyncClient(timeout=settings.HF_TIMEOUT_SECONDS) as client:
-            response = await client.post(url, headers=headers, content=image_bytes)
+            response = await client.post(url, headers=headers, json=payload)
             
-            # Se retornar 503, o modelo ainda está carregando
             if response.status_code == 503:
                 logger.warning("HuggingFace model is loading (503). Using fallback.")
                 return await _classify_local_fallback(image_bytes)
@@ -43,20 +79,27 @@ async def classify_image(image_bytes: bytes) -> dict:
             response.raise_for_status()
             
             result = response.json()
+            content = result['choices'][0]['message']['content'].strip()
             
-            # O modelo ViT retorna uma lista de dicionários [{"label": "...", "score": ...}, ...]
-            if isinstance(result, list) and len(result) > 0:
-                # Pegamos o resultado com maior score
-                best_match = max(result, key=lambda x: x.get("score", 0.0))
-                return {
-                    "label": best_match.get("label", "unknown"),
-                    "score": float(best_match.get("score", 0.0)),
-                    "raw": result,
-                    "source": "huggingface"
-                }
+            # Limpa blocos de código markdown se o modelo gerou apesar das instruções
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
             
-            logger.error(f"Unexpected HF response format: {result}")
-            return await _classify_local_fallback(image_bytes)
+            parsed = json.loads(content)
+            label = parsed.get("label", "unknown")
+            score = float(parsed.get("score", 0.0))
+            
+            return {
+                "label": label,
+                "score": score,
+                "raw": result,
+                "source": "huggingface"
+            }
             
     except Exception as e:
         logger.error(f"Error calling HuggingFace API: {e}")
@@ -66,15 +109,14 @@ def map_severity(score: float, label: str) -> str:
     if score < settings.HF_CONFIDENCE_THRESHOLD:
         return "pending_review"
         
-    risk_words = ["crack", "damage", "broken", "leak", "rust", "corrosion", "fracture", "deterioration"]
-    label_lower = label.lower()
+    label_lower = label.lower().strip()
     
-    has_risk = any(word in label_lower for word in risk_words)
-    
-    if has_risk and score >= 0.8:
+    if label_lower in ["rachadura crítica", "corrosão de armadura"]:
         return "critical"
-    elif has_risk:
+    elif label_lower == "infiltração ou umidade":
         return "moderate"
+    elif label_lower == "estrutura intacta e sem danos":
+        return "low"
     else:
         return "low"
 

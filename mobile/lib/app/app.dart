@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
 import 'package:vistor_ai_mobile/app/router.dart';
 import 'package:vistor_ai_mobile/core/di/service_locator.dart';
+import 'package:vistor_ai_mobile/core/local/sync_manager.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/map/domain/map_cubit.dart';
@@ -26,6 +27,13 @@ class _VistorAppState extends State<VistorApp> {
     super.initState();
     _authCubit = getIt<AuthCubit>()..checkAuth();
     _router = buildRouter(_authCubit);
+    getIt<SyncManager>().startListening();
+  }
+
+  @override
+  void dispose() {
+    getIt<SyncManager>().stopListening();
+    super.dispose();
   }
 
   @override
