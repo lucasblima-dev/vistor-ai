@@ -25,6 +25,8 @@ async def _populate_media_urls(inspections: List[Inspection] | Inspection):
         for m in insp.media:
             if m.thumbnail_key:
                 m.thumbnail_url = await storage_service.get_presigned_download_url("thumbnails", m.thumbnail_key)
+            elif m.minio_key:
+                m.thumbnail_url = await storage_service.get_presigned_download_url("inspections", m.minio_key)
 
 async def _reverse_geocode(lat: float, lon: float) -> Optional[str]:
     """Tenta obter o endereço via Nominatim (OSM) se o mobile não enviar."""

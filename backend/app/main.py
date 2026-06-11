@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, users, inspections, media, reports, geo
+from app.routers import auth, users, inspections, media, reports, geo, audit
 from app.services import storage_service
 
 
@@ -35,6 +35,7 @@ app.include_router(inspections.router, prefix="/api/inspections", tags=["Inspect
 app.include_router(media.router, prefix="/api/media", tags=["Media"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(geo.router, prefix="/api/geo", tags=["Geo"])
+app.include_router(audit.router, prefix="/api/audit-logs", tags=["Audit Logs"])
 
 
 @app.get("/health", tags=["Health"])

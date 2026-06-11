@@ -170,38 +170,76 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
           pinned: true,
           stretch: true,
           backgroundColor: AppColors.primary,
-          flexibleSpace: FlexibleSpaceBar(
-            stretchModes: const [StretchMode.zoomBackground],
-            centerTitle: false,
-            titlePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
-            title: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    SeverityBadge(
-                      severity: inspection.severity ?? InspectionSeverity.pendingReview,
-                      isLarge: true,
-                    ),
-                    const SizedBox(width: 8),
-                    _StatusBadge(status: inspection.status),
-                  ],
+          flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              final appBarHeight = constraints.biggest.height;
+              final statusBarHeight = MediaQuery.of(context).padding.top;
+              final isCollapsed = appBarHeight <= kToolbarHeight + statusBarHeight + 30;
+
+              return FlexibleSpaceBar(
+                stretchModes: const [StretchMode.zoomBackground],
+                centerTitle: false,
+                titlePadding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, 
+                  vertical: isCollapsed ? 10 : 16
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  inspection.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+                title: isCollapsed
+                    ? SafeArea(
+                        bottom: false,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                inspection.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SeverityBadge(
+                              severity: inspection.severity ?? InspectionSeverity.pendingReview,
+                              isLarge: false,
+                            ),
+                            const SizedBox(width: 4),
+                            _StatusBadge(status: inspection.status),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              SeverityBadge(
+                                severity: inspection.severity ?? InspectionSeverity.pendingReview,
+                                isLarge: true,
+                              ),
+                              const SizedBox(width: 8),
+                              _StatusBadge(status: inspection.status),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            inspection.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+
             background: Stack(
               fit: StackFit.expand,
               children: [
@@ -235,8 +273,10 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
+      ),
+    ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
