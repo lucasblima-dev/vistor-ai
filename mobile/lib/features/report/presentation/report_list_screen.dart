@@ -4,13 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
-import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
-import 'package:vistor_ai_mobile/features/report/domain/report_state.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_state.dart';
 import 'package:vistor_ai_mobile/shared/models/report.dart';
 import 'package:vistor_ai_mobile/shared/widgets/empty_state.dart';
+import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
 import 'package:vistor_ai_mobile/shared/widgets/error_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/loading_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_filex/open_filex.dart';
 
 class ReportListScreen extends StatefulWidget {
   const ReportListScreen({super.key});
@@ -95,8 +97,10 @@ class _ReportListScreenState extends State<ReportListScreen> {
                 return state.when(
                   initial: () => const SizedBox.shrink(),
                   loading: () => const AppLoadingState(message: 'Carregando laudos...'),
-                  generating: () => const AppLoadingState(message: 'Gerando laudo técnico...'),
-                  generated: (report) => const AppLoadingState(message: 'Laudo gerado!'),
+                  downloading: (progress) => AppLoadingState(
+                    message: 'Baixando laudo... ${(progress * 100).toStringAsFixed(0)}%',
+                  ),
+                  downloaded: (filePath) => const AppLoadingState(message: 'Laudo pronto!'),
                   error: (msg) => AppErrorState(
                     message: msg,
                     onRetry: () => context.read<ReportCubit>().loadAll(),
@@ -210,12 +214,32 @@ class _ReportCard extends StatelessWidget {
                   const Spacer(),
                   IconButton(
                     icon: const Icon(LucideIcons.download, size: 20),
-                    onPressed: () {},
+                    onPressed: () async {
+                      try {
+                        final savedPath = await context.read<ReportCubit>().downloadToLocal(report);
+                        if (savedPath != null && context.mounted) {
+                          showSuccessSnackbar(context, 'Laudo salvo em: $savedPath');
+                          await OpenFilex.open(savedPath);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          showErrorSnackbar(context, e.toString());
+                        }
+                      }
+                    },
                     visualDensity: VisualDensity.compact,
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.share2, size: 20),
-                    onPressed: () {},
+                    onPressed: () async {
+                      try {
+                        await context.read<ReportCubit>().shareReport(report);
+                      } catch (e) {
+                        if (context.mounted) {
+                          showErrorSnackbar(context, e.toString());
+                        }
+                      }
+                    },
                     visualDensity: VisualDensity.compact,
                   ),
                 ],

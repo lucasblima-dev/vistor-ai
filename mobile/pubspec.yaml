@@ -25,6 +25,7 @@ dependencies:
   freezed_annotation: ^3.1.0
   hive_flutter: ^1.1.0
   connectivity_plus: ^5.0.0
+  crypto: ^3.0.3
   open_filex: ^4.3.4
   signature: ^5.4.0
   cached_network_image: ^3.3.1
@@ -41,6 +42,9 @@ dependencies:
   path_provider: ^2.1.5
   intl: ^0.20.2
   geocoding: ^4.0.0
+  share_plus: ^12.0.2
+  flutter_pdfview: ^1.4.4
+  permission_handler: ^12.0.3
 
 dev_dependencies:
   flutter_test:

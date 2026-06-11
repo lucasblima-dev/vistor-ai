@@ -15,8 +15,9 @@ import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dar
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/map/data/map_repository.dart';
 import 'package:vistor_ai_mobile/features/map/domain/map_cubit.dart';
-import 'package:vistor_ai_mobile/features/report/data/report_repository.dart';
-import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
+import 'package:vistor_ai_mobile/features/report/domain/repositories/report_repository.dart';
+import 'package:vistor_ai_mobile/features/report/data/repositories/report_repository_impl.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
 import 'package:vistor_ai_mobile/core/services/gps_service.dart';
 import 'package:vistor_ai_mobile/core/services/media_service.dart';
 
@@ -65,7 +66,7 @@ Future<void> setupLocator() async {
   );
 
   getIt.registerLazySingleton<ReportRepository>(
-    () => ReportRepository(apiClient: getIt<ApiClient>()),
+    () => ReportRepositoryImpl(apiClient: getIt<ApiClient>()),
   );
 
   getIt.registerLazySingleton<MapRepository>(

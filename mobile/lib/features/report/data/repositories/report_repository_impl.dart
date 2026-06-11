@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:vistor_ai_mobile/core/api/api_client.dart';
 import 'package:vistor_ai_mobile/core/api/endpoints.dart';
+import 'package:vistor_ai_mobile/features/report/domain/repositories/report_repository.dart';
 import 'package:vistor_ai_mobile/shared/models/report.dart';
 
-class ReportRepository {
+class ReportRepositoryImpl implements ReportRepository {
   final ApiClient _apiClient;
 
-  ReportRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+  ReportRepositoryImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
+  @override
   Future<Report> generate(String inspectionId) async {
     const maxAttempts = 15; // 30s / 2s = 15 attempts
     const delay = Duration(seconds: 2);
@@ -38,11 +40,13 @@ class ReportRepository {
     throw Exception('Tempo limite excedido ao gerar o laudo técnico.');
   }
 
+  @override
   Future<Report> getById(String id) async {
     final response = await _apiClient.get(AppEndpoints.reportDetail(id));
     return Report.fromJson(response.data);
   }
 
+  @override
   Future<List<Report>> getAll() async {
     final response = await _apiClient.get('/reports/');
     final List<dynamic> data = response.data;

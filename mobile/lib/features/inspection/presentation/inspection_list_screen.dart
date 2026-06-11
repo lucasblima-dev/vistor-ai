@@ -4,6 +4,8 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vistor_ai_mobile/app/router.dart';
+import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
+import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_state.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/widgets/inspection_card.dart';
@@ -45,9 +47,20 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Minhas Inspeções',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            BlocSelector<AuthCubit, AuthState, String?>(
+              selector: (state) => state.maybeWhen(
+                authenticated: (user) => user.name,
+                orElse: () => null,
+              ),
+              builder: (context, name) {
+                final greeting = (name != null && name.trim().isNotEmpty)
+                    ? 'Olá, ${name.trim()}!'
+                    : 'Olá!';
+                return Text(
+                  greeting,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                );
+              },
             ),
             Text(
               'Visão geral do campo',

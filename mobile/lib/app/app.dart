@@ -9,7 +9,7 @@ import 'package:vistor_ai_mobile/core/local/sync_manager.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/map/domain/map_cubit.dart';
-import 'package:vistor_ai_mobile/features/report/domain/report_cubit.dart';
+import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
 
 class VistorApp extends StatefulWidget {
   const VistorApp({super.key});
