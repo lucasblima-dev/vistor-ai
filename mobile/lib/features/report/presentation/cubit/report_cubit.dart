@@ -3,7 +3,6 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vistor_ai_mobile/features/report/domain/repositories/report_repository.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_state.dart';
