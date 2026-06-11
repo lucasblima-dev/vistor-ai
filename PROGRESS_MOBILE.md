@@ -346,7 +346,7 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - `mobile/lib/features/inspection/presentation/widgets/inspection_card.dart` — completo.
 - `mobile/lib/features/inspection/presentation/widgets/severity_badge.dart` — completo.
 - `mobile/lib/app/router.dart" — atualizado com provedores e banners.
-- `mobile/lib/pubspec.yaml" — dependência `intl` adicionada.
+- `mobile/lib/pubspec.yaml" — dependência`intl` adicionada.
 
 ### Validações que passaram
 
@@ -783,3 +783,55 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 [✅] Tabela de controle preenchida (Kaio + 09/06/2026)
 [✅] PROGRESS_MOBILE.md atualizado
 ```
+
+---
+
+## Task 23
+
+**Data:** 10/06/2026
+
+**Sprint:** X - Ciclo de Vida da Inspeção & IA (Lucas)
+**Sessão:** X.X — Ciclo de Vida, Reavaliação de IA & Visualização Póstuma
+
+### O que foi feito
+
+- **Backend:**
+  - Criação do endpoint `POST /api/inspections/{id}/reclassify` em `routers/inspections.py` para re-processar a classificação por IA de forma síncrona.
+  - Implementação da lógica no serviço `reclassify` (`services/inspection_service.py`) validando a presença de fotos confirmadas.
+  - Criação de caso de teste unitário `test_reclassify_no_photos` em `tests/test_inspections.py`.
+- **Mobile - Ciclo de Vida da Inspeção:**
+  - Redesenho da barra inferior `_buildBottomBar` no detalhe de inspeção (`InspectionDetailScreen`) para gerenciar as transições de status:
+    - Estado `open`: Iniciar Inspeção (muda para `in_progress`).
+    - Estado `in_progress`: Finalizar (muda para `resolved`) com validação de fotos (RN-01), Arquivar (muda para `archived`) e Gerar Laudo Parcial.
+    - Estado `resolved`: Gerar Laudo Técnico e Arquivar.
+  - Adição do status `archived` nos chips de filtro e na lógica do `InspectionListScreen`.
+- **Mobile - Reavaliação de IA & Fallbacks:**
+  - Integração do endpoint de reclassificação no repositório mobile (`reclassify`) e criação do método `reevaluateWithAi` no `InspectionDetailCubit`.
+  - Adição do booleano `isReevaluating` ao `InspectionDetailState` (geração de código pelo `build_runner` concluída com sucesso).
+  - Melhoria de UX no card de IA do detalhe para exibir erro e o botão de "Reavaliar com IA" se a análise falhar, além do botão de "Definir Manual" para fallback manual.
+  - Modificação do fluxo de criação (`CreateInspectionCubit.submit`) para capturar falhas ou timeouts no processamento de IA e prosseguir sem bloquear o usuário.
+- **Mobile - Visualização Póstuma:**
+  - Desenvolvimento da tela `ArchivedInspectionsScreen` que lista ocorrências resolvidas ou arquivadas em modo somente-leitura.
+  - Adição da rota `/profile/archive` no `router.dart` e do respectivo botão de navegação na `ProfileScreen`.
+  - Tratamento da flag `readOnly` no detalhe de inspeção para desativar botões de IA e ocultar a barra de ações.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/inspections.py` — endpoint de reclassificação adicionado.
+- `backend/app/services/inspection_service.py` — lógica do service adicionada.
+- `backend/app/tests/test_inspections.py` — teste unitário adicionado.
+- `mobile/lib/core/api/endpoints.dart` — rota de reclassificação mapeada.
+- `mobile/lib/features/inspection/data/inspection_repository.dart` — método de repositório `reclassify` adicionado.
+- `mobile/lib/features/inspection/domain/` — `InspectionDetailCubit` e `InspectionDetailState` atualizados com reavaliação de IA.
+- `mobile/lib/features/inspection/presentation/inspection_detail_screen.dart` — lógica de UI de ações, IA e somente-leitura.
+- `mobile/lib/features/inspection/presentation/widgets/status_timeline.dart` — timeline enriquecida com logs de IA e severidade.
+- `mobile/lib/features/inspection/presentation/archived_inspections_screen.dart` — criado.
+- `mobile/lib/app/router.dart` — rotas do arquivo e flag `readOnly` adicionadas.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — botão para o arquivo adicionado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+
+---

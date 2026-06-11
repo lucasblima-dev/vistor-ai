@@ -58,62 +58,54 @@ O sistema utiliza RBAC (Role-Based Access Control) para segmentar as operações
 
 ---
 
-## Como Executar Localmente
+## Como Executar o Ecossistema (Docker Compose)
+
+O ecossistema completo de suporte do Vistor AI (API FastAPI, Banco de Dados PostGIS, Cache Redis e Armazenamento MinIO) pode ser iniciado de forma automatizada através do Docker Compose.
 
 ### Pré-requisitos
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Git](https://git-scm.com/)
-- [Fluuter SDK](https://docs.flutter.dev/install/manual)
 
-### 1. Infraestrutura Base
+### Instruções de Inicialização
 
-```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/vistor-ai.git
-cd vistor-ai
+1. **Clonar o repositório e configurar variáveis de ambiente:**
+   ```bash
+   git clone https://github.com/seu-usuario/vistor-ai.git
+   cd vistor-ai
+   cp .env.example .env
+   ```
 
-# Configure as variáveis de ambiente
-cp .env.example .env
+2. **Iniciar os containers em segundo plano:**
+   ```bash
+   docker compose up -d
+   ```
+   *Este comando baixa as imagens necessárias e inicia o banco de dados PostgreSQL/PostGIS, o cache Redis, o storage MinIO S3 e a API FastAPI.*
 
-# Inicie os serviços de suporte
-docker compose up -d
-```
+3. **Executar as migrations do banco de dados (Alembic):**
+   ```bash
+   docker compose exec api alembic upgrade head
+   ```
 
-### 2. Backend (FastAPI)
+4. **Popular o banco com o usuário de teste padrão (Seed):**
+   ```bash
+   docker compose exec api python seed_user.py
+   ```
+   * Credenciais geradas para testes:
+     * **E-mail:** `test@example.com`
+     * **Senha:** `password123`
 
-```bash
-cd backend
-cp .env.example .env
-
-# Configuração do ambiente Python
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
-pip install -r requirements.txt
-
-# Execução de migrations e inicialização
-alembic upgrade head
-uvicorn app.main:app --reload
-```
-
-API disponível em: `http://localhost:8000`. Documentação Swagger: `/docs`.
-
-### 3. Mobile (Flutter)
-
-```bash
-cd mobile
-flutter pub get
-flutter run
-```
+Após a conclusão destes passos, a API estará acessível em `http://localhost:8000` e a documentação interativa Swagger estará disponível em `http://localhost:8000/docs`.
 
 ---
 
 ## Documentação de Referência
 
-Para detalhes específicos sobre padrões, fluxos e regras de negócio, consulte:
+Para detalhes específicos sobre padrões, fluxos, regras de negócio e configuração de ambientes locais de desenvolvimento e depuração, consulte:
 
 - [`/GEMINI.md`](./GEMINI.md) — Diretrizes globais e princípios invioláveis.
-- [`/docs/backend/GEMINI.md`](./docs/backend/GEMINI.md) — Padrões de Service/Router e convenções Python.
+- [`/docs/backend/GEMINI.md`](./docs/backend/GEMINI.md) — Guia do Backend: Configuração do ambiente virtual Python, dependências nativas (WeasyPrint/libmagic), migrations locais e execução de testes (pytest).
+- [`/docs/mobile/GEMINI.md`](./docs/mobile/GEMINI.md) — Guia do Mobile: Configuração do SDK Flutter, geração do Envied (build_runner) com invalidação de cache, vinculação de portas e túnel ADB.
 - [`/docs/inspetor/GEMINI.md`](./docs/inspetor/GEMINI.md) — Especificações do módulo de campo.
 - [`/docs/gestor/GEMINI.md`](./docs/gestor/GEMINI.md) — Regras de geoprocessamento e dashboard.
 - [`/docs/admin/GEMINI.md`](./docs/admin/GEMINI.md) — Protocolos de auditoria e segurança.

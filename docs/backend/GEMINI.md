@@ -104,6 +104,110 @@ backend/
 
 ---
 
+## Setup de Desenvolvimento Local
+
+Caso precise executar, depurar ou testar o backend localmente fora do container Docker, siga as instruções abaixo para preparar o ambiente Python de desenvolvimento:
+
+### 1. Pré-requisitos de Sistema (Nativos)
+
+A API utiliza o **WeasyPrint** (geração de PDF) e o **python-magic** (validação de tipo de arquivos por magic bytes). Esses pacotes possuem dependências nativas de sistema:
+
+* **No Linux (Debian/Ubuntu):**
+
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y build-essential python3-dev \
+      libpango-1.0-0 libpangoft2-1.0-0 \
+      libcairo2 libjpeg-turbo8 libmagic1 shared-mime-info
+  ```
+
+* **No Windows:**
+  * Instale as bibliotecas nativas de GTK3 (contendo Cairo e Pango) requeridas pelo WeasyPrint, conforme instruções de instalação oficiais do WeasyPrint para Windows.
+  * Para o `python-magic`, instale a versão compilada com DLLs inclusas: `pip install python-magic-bin`.
+
+### 2. Configuração do Ambiente Python
+
+1. Acesse o diretório `backend/`:
+
+   ```bash
+   cd backend
+   ```
+
+2. Crie e ative o ambiente virtual virtualenv:
+
+   ```bash
+   python -m venv .venv
+   # Ativação no Windows (PowerShell):
+   .venv\Scripts\Activate.ps1
+   # Ativação no Linux/macOS:
+   source .venv/bin/activate
+   ```
+
+3. Instale o pacote em modo editável e as dependências extras de desenvolvimento:
+
+   ```bash
+   pip install --upgrade pip
+   pip install -e .
+   pip install ".[dev]"
+   ```
+
+### 3. Variáveis de Ambiente (.env)
+
+Crie o arquivo `.env` a partir do modelo padrão:
+
+```bash
+cp .env.example .env
+```
+
+> Edite as conexões com banco de dados, Redis, MinIO S3 e as chaves de API necessárias no arquivo [backend/.env](/vistor-ai/backend/.env).
+
+### 4. Migrações de Banco de Dados (Alembic)
+
+Para aplicar as migrações locais até a revisão mais atualizada:
+
+```bash
+alembic upgrade head
+```
+
+> [!IMPORTANT]
+> **Alterações de Esquema:** Ao modificar um modelo SQLAlchemy, gere uma nova migração executando `alembic revision --autogenerate -m "descricao"`. **Nunca** modifique arquivos de migração históricos que já foram integrados ao repositório.
+
+### 5. Criação de Usuário de Testes (Seed)
+
+Execute o script para popular o banco local com a conta de teste:
+
+```bash
+python seed_user.py
+```
+
+* **Credenciais padrão:**
+  * **Usuário:** `test@example.com`
+  * **Senha:** `password123`
+
+### 6. Execução Local e Testes
+
+* **Servidor de Desenvolvimento (Uvicorn):**
+
+  ```bash
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  ```
+
+* **Executar suíte de testes (com cobertura):**
+
+  ```bash
+  pytest --cov=app --cov-report=term-missing
+  ```
+
+  *(Nota: A cobertura de código mínima obrigatória para o backend é de **70%**).*
+* **Análise de Linter e Estilo (Ruff):**
+
+  ```bash
+  ruff check .
+  ruff format .
+  ```
+
+---
+
 ## Organização das camadas
 
 ```
@@ -137,9 +241,9 @@ async def create_inspection(
     return await inspection_service.create(db, payload, owner_id=user.id)
 ```
 
-- Sempre declare `response_model` explicitamente.
-- Sempre use `status_code` explícito em POST (201) e DELETE (204).
-- Nunca acesse `db` diretamente no router — passe para o service.
+* Sempre declare `response_model` explicitamente.
+* Sempre use `status_code` explícito em POST (201) e DELETE (204).
+* Nunca acesse `db` diretamente no router — passe para o service.
 
 ---
 
@@ -162,9 +266,9 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: str) -> 
     return insp
 ```
 
-- Sempre `await db.commit()` + `await db.refresh()` após escrita.
-- Sempre registrar em `audit_log` após operações de escrita.
-- Levante `HTTPException` (não genérica) para erros de negócio.
+* Sempre `await db.commit()` + `await db.refresh()` após escrita.
+* Sempre registrar em `audit_log` após operações de escrita.
+* Levante `HTTPException` (não genérica) para erros de negócio.
 
 ---
 
@@ -233,5 +337,5 @@ async def test_create_inspection_success(authed_client: AsyncClient, inspector_u
     assert response.json()["status"] == "open"
 ```
 
-- `conftest.py` deve fornecer fixtures: `db`, `client`, `authed_client`, `inspector_user`, `manager_user`.
-- Testes de integração usam banco PostgreSQL em container separado (`pytest-docker` ou `testcontainers`).
+* `conftest.py` deve fornecer fixtures: `db`, `client`, `authed_client`, `inspector_user`, `manager_user`.
+* Testes de integração usam banco PostgreSQL em container separado (`pytest-docker` ou `testcontainers`).

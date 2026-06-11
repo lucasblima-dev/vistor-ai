@@ -33,32 +33,81 @@
 
 ## Setup Local para Desenvolvimento
 
-Se você acabou de clonar o repositório ou limpou o projeto, siga estes passos para rodar o app localmente sem erros:
+Caso necessite compilar ou depurar o aplicativo móvel localmente, siga os passos abaixo para preparar o ambiente:
 
-### 1. Inicializar dependências e gerar código (Obrigatório)
-O app utiliza **Freezed** e **Drift** para geração automática de código. O projeto não compilará antes de gerar esses arquivos. Execute:
+### 1. Instalação de Dependências e Pacotes
+
+A partir da pasta `mobile/`, instale todas as dependências declaradas no pubspec.yaml:
+
 ```bash
+cd mobile
 flutter pub get
+```
+
+### 2. Configuração do Arquivo de Ambiente (.env)
+
+O aplicativo utiliza o pacote `Envied` para injeção de variáveis de ambiente.
+
+1. Crie o arquivo `.env` na pasta `mobile/` a partir do modelo de exemplo:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Abra o arquivo [mobile/.env](file:///C:/Users/lukin/OneDrive/Documentos/vistor-ai/mobile/.env) e configure a variável `API_BASE_URL` (geralmente apontando para `http://localhost:8000`).
+
+### 3. Geração de Código e Invalidação de Cache do Envied
+
+O app utiliza **Freezed**, **Drift** e **Envied** para geração de código. O projeto não compilará antes de gerar esses arquivos.
+
+Execute o gerador na pasta `mobile/`:
+
+```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-### 2. Configurar o redirecionamento de portas (adb reverse)
-Se você estiver depurando em um **dispositivo físico Android** via USB/WiFi, é necessário que o celular consiga acessar os serviços que rodam no Docker da sua máquina de desenvolvimento (a API FastAPI na porta `8000` e o Storage do MinIO na porta `9000`). Execute:
+> [!WARNING]
+> **Invalidação de Cache do Envied:** O `build_runner` realiza cache agressivo. Se você alterar a URL da API no arquivo `.env` mas não fizer alterações em nenhum arquivo `.dart`, o gerador de código **restaurará o arquivo antigo do cache** (mantendo o IP anterior e impedindo a conexão).
+>
+> Para forçar a invalidação do cache e compilar com as novas credenciais/IP:
+>
+> 1. Abra o arquivo [mobile/lib/core/utils/env.dart](vistor-ai/mobile/lib/core/utils/env.dart).
+> 2. Faça uma alteração sutil na última linha de comentário (ex: altere a versão do trigger no final).
+> 3. Salve o arquivo e re-execute o comando `dart run build_runner build --delete-conflicting-outputs`.
+
+### 4. Configuração de Rede e Mapeamento de Portas via ADB
+
+Para que o emulador Android ou dispositivo físico conectado via USB consiga se comunicar com a API e o Storage MinIO que rodam no Docker Compose da máquina host, é necessário criar um túnel de redirecionamento de portas via ADB.
+
+Com o dispositivo móvel/emulador conectado e reconhecido pelo comando `adb devices`, execute no host:
+
 ```bash
 adb reverse tcp:8000 tcp:8000
 adb reverse tcp:9000 tcp:9000
 ```
-> [!IMPORTANT]
-> Se você esquecer de mapear a porta `9000`, a criação de inspeções online falhará com erro de conexão ao tentar enviar imagens para o MinIO.
 
-### 3. Aceitar Licenças do Android
-Caso a máquina de desenvolvimento não tenha as licenças do Android aceitas, o build do Gradle pode travar. Aceite as licenças com:
+> [!IMPORTANT]
+> A porta `8000` redireciona o tráfego da API FastAPI e a porta `9000` redireciona o tráfego do Object Storage MinIO. Se o redirecionamento da porta `9000` for omitido, o aplicativo móvel falhará ao realizar uploads de mídia durante as inspeções.
+> **Nota:** Este mapeamento deve ser executado novamente sempre que o dispositivo ou emulador for reiniciado.
+
+### 5. Aceitação de Licenças e Compilação Inicial
+
+Para garantir que as dependências do Android Gradle sejam resolvidas corretamente:
+
 ```bash
 flutter doctor --android-licenses
 ```
-E realize a primeira compilação pelo terminal para baixar os SDKs necessários sem causar timeout na extensão de depuração do VS Code:
+
+E realize a primeira compilação pelo terminal em modo de depuração para instalar os SDKs necessários:
+
 ```bash
 flutter build apk --debug
+```
+
+Para depurar ativamente no dispositivo conectado:
+
+```bash
+flutter run
 ```
 
 ---
