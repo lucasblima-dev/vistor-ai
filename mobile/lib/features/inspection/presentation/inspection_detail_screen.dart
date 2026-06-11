@@ -17,7 +17,6 @@ import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/loading_overlay.dart';
-import 'package:go_router/go_router.dart';
 
 class _StatusBadge extends StatelessWidget {
   final InspectionStatus status;
@@ -173,101 +172,6 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         ? inspection.media.first.thumbnailUrl ?? '' 
         : '';
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 260,
-          pinned: true,
-          stretch: true,
-          backgroundColor: AppColors.primary,
-          flexibleSpace: LayoutBuilder(
-            builder: (context, constraints) {
-              final appBarHeight = constraints.biggest.height;
-              final statusBarHeight = MediaQuery.of(context).padding.top;
-              final isCollapsed = appBarHeight <= kToolbarHeight + statusBarHeight + 30;
-
-              return FlexibleSpaceBar(
-                stretchModes: const [StretchMode.zoomBackground],
-                centerTitle: false,
-                titlePadding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, 
-                  vertical: isCollapsed ? 10 : 16
-                ),
-                title: isCollapsed
-                    ? SafeArea(
-                        bottom: false,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                inspection.title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SeverityBadge(
-                              severity: inspection.severity ?? InspectionSeverity.pendingReview,
-                              isLarge: false,
-                            ),
-                            const SizedBox(width: 4),
-                            _StatusBadge(status: inspection.status),
-                          ],
-                        ),
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              SeverityBadge(
-                                severity: inspection.severity ?? InspectionSeverity.pendingReview,
-                                isLarge: true,
-                              ),
-                              const SizedBox(width: 8),
-                              _StatusBadge(status: inspection.status),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            inspection.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                Hero(
-                  tag: 'inspection-${inspection.id}',
-                  child: heroImageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: heroImageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: Colors.grey[300]),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(LucideIcons.imageOff, color: Colors.grey),
-                          ),
-                        )
-                      : Container(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          child: const Icon(LucideIcons.image, size: 64, color: AppColors.primary),
     return Stack(
       children: [
         CustomScrollView(
@@ -277,102 +181,113 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
               expandedHeight: 260,
               pinned: true,
               stretch: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-              flexibleSpace: FlexibleSpaceBar(
-                stretchModes: const [StretchMode.zoomBackground],
-                centerTitle: false,
-                titlePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
-                title: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              backgroundColor: AppColors.primary,
+              flexibleSpace: LayoutBuilder(
+                builder: (context, constraints) {
+                  final appBarHeight = constraints.biggest.height;
+                  final statusBarHeight = MediaQuery.of(context).padding.top;
+                  final isCollapsed = appBarHeight <= kToolbarHeight + statusBarHeight + 30;
+
+                  return FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    centerTitle: false,
+                    titlePadding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, 
+                      vertical: isCollapsed ? 10 : 16
+                    ),
+                    title: isCollapsed
+                        ? SafeArea(
+                            bottom: false,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    inspection.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SeverityBadge(
+                                  severity: inspection.severity ?? InspectionSeverity.pendingReview,
+                                  isLarge: false,
+                                ),
+                                const SizedBox(width: 4),
+                                _StatusBadge(status: inspection.status),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  SeverityBadge(
+                                    severity: inspection.severity ?? InspectionSeverity.pendingReview,
+                                    isLarge: true,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _StatusBadge(status: inspection.status),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                inspection.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                    background: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        SeverityBadge(
-                          severity: inspection.severity ?? InspectionSeverity.pendingReview,
-                          isLarge: true,
+                        Hero(
+                          tag: 'inspection-${inspection.id}',
+                          child: heroImageUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: heroImageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(color: Colors.grey[300]),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(LucideIcons.imageOff, color: Colors.grey),
+                                  ),
+                                )
+                              : Container(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  child: const Icon(LucideIcons.image, size: 64, color: AppColors.primary),
+                                ),
                         ),
-                        const SizedBox(width: 8),
-                        _StatusBadge(status: inspection.status),
+                        // Gradient Overlay
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black],
+                              stops: [0.3, 1.0],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      inspection.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Hero(
-                      tag: 'inspection-${inspection.id}',
-                      child: heroImageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: heroImageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(color: Colors.grey[300]),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[300],
-                                child: const Icon(LucideIcons.imageOff, color: Colors.grey),
-                              ),
-                            )
-                          : Container(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              child: const Icon(LucideIcons.image, size: 64, color: AppColors.primary),
-                            ),
-                    ),
-                    // Gradient Overlay
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black],
-                          stops: [0.3, 1.0],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
-          );
-        },
-      ),
-    ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoGrid(context, inspection),
-                const SizedBox(height: AppSpacing.xl),
-                _buildAiAnalysisSection(context, inspection, isUpdating, isReevaluating),
-                const SizedBox(height: AppSpacing.xl),
-                if (inspection.media.isNotEmpty) ...[
-                  _buildMediaSection(context, inspection),
-                  const SizedBox(height: AppSpacing.xl),
-                ],
-                const Text(
-                  'Linha do Tempo',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                StatusTimeline(
-                  history: history.cast(),
-                  currentStatus: inspection.status,
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
@@ -381,10 +296,8 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                   children: [
                     _buildInfoGrid(context, inspection),
                     const SizedBox(height: AppSpacing.xl),
-                    if (inspection.aiLabel != null) ...[
-                      _buildAiAnalysisSection(context, inspection, isUpdating),
-                      const SizedBox(height: AppSpacing.xl),
-                    ],
+                    _buildAiAnalysisSection(context, inspection, isUpdating, isReevaluating),
+                    const SizedBox(height: AppSpacing.xl),
                     if (inspection.media.isNotEmpty) ...[
                       _buildMediaSection(context, inspection),
                       const SizedBox(height: AppSpacing.xl),
@@ -745,33 +658,6 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
               color: Colors.black.withValues(alpha: 0.05),
               offset: const Offset(0, -4),
               blurRadius: 10,
-        ],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: (isUpdating || isGenerating) 
-                ? null 
-                : (isOpen 
-                    ? () => context.read<InspectionDetailCubit>().updateStatus(InspectionStatus.inProgress)
-                    : (canGenerate 
-                        ? () async {
-                            final report = await context.read<ReportCubit>().generate(inspection.id);
-                            if (report != null && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Laudo técnico gerado com sucesso!'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                              context.push('/reports/${report.id}', extra: report);
-                            }
-                          }
-                        : null)),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: isOpen ? AppColors.primary : null,
             ),
           ],
         ),
