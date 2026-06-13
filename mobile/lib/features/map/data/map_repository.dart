@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:vistor_ai_mobile/core/api/api_client.dart';
 import 'package:vistor_ai_mobile/core/api/endpoints.dart';
 import 'package:vistor_ai_mobile/features/map/data/heatmap_point.dart';
@@ -42,5 +43,32 @@ class MapRepository {
     final List<dynamic> features = geojson['features'] as List<dynamic>;
 
     return features.map((feature) => HeatmapPoint.fromJson(feature)).toList();
+  }
+
+  Future<String> exportData({
+    required String format,
+    String? status,
+    String? severity,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'format': format,
+    };
+    if (status != null) {
+      queryParams['status'] = status;
+    }
+    if (severity != null) {
+      queryParams['severity'] = severity;
+    }
+
+    final response = await _apiClient.dio.get<String>(
+      AppEndpoints.export,
+      queryParameters: queryParams,
+      options: Options(responseType: ResponseType.plain),
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data!;
+    }
+    throw Exception('Erro ao exportar dados do servidor.');
   }
 }
