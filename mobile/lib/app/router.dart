@@ -11,12 +11,16 @@ import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/profile_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/user_management_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_detail_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/archived_inspections_screen.dart';
+import 'package:vistor_ai_mobile/features/inspection/presentation/team_management_screen.dart';
+import 'package:vistor_ai_mobile/shared/models/user.dart';
 import 'package:vistor_ai_mobile/features/map/presentation/map_screen.dart';
+import 'package:vistor_ai_mobile/features/map/presentation/export_data_screen.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/report_list_screen.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/screens/report_detail_screen.dart';
@@ -136,6 +140,30 @@ GoRouter buildRouter(AuthCubit authCubit) {
       );
 
       if (authRedirect != null) return authRedirect;
+
+      // 2. Controle de Acesso Baseado em Role (RBAC)
+      final String? rbacRedirect = authState.maybeWhen(
+        authenticated: (user) {
+          final isTeamRoute = state.matchedLocation.startsWith(AppRoutes.teamManagement);
+          final isExportRoute = state.matchedLocation.startsWith(AppRoutes.exportData);
+          final isUserRoute = state.matchedLocation.startsWith(AppRoutes.userManagement);
+
+          if (isTeamRoute || isExportRoute) {
+            if (user.role != UserRole.manager && user.role != UserRole.admin) {
+              return AppRoutes.home; // Apenas manager ou admin
+            }
+          }
+          if (isUserRoute) {
+            if (user.role != UserRole.admin) {
+              return AppRoutes.home; // Apenas admin
+            }
+          }
+          return null;
+        },
+        orElse: () => null,
+      );
+
+      if (rbacRedirect != null) return rbacRedirect;
 
       // 2. Redirecionamento de Conectividade (UC-03 / RN-01)
       final networkDependentRoutes = [
@@ -261,21 +289,15 @@ GoRouter buildRouter(AuthCubit authCubit) {
       // Rotas fora do shell (Gestão)
       GoRoute(
         path: AppRoutes.teamManagement,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Gestão de Equipe')),
-        ),
+        builder: (context, state) => const TeamManagementScreen(),
       ),
       GoRoute(
         path: AppRoutes.exportData,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Exportar Dados')),
-        ),
+        builder: (context, state) => const ExportDataScreen(),
       ),
       GoRoute(
         path: AppRoutes.userManagement,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Gestão de Usuários')),
-        ),
+        builder: (context, state) => const UserManagementScreen(),
       ),
 
       // Utilitário

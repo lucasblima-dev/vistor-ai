@@ -14,7 +14,7 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 | 11 | Detalhe da Inspeção + Gerar Laudo | ✅ Concluído | 09/06/2026 |
 | 12 | Mapa + Heatmap | ✅ Concluído | 09/06/2026 |
 | 13 | Laudos + Perfil + Offline | ✅ Concluído | 09/06/2026 |
-| 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — | — |
+| 14 | Gestão de Equipe + Exportar + Usuários | ✅ Concluído | 13/06/2026 |
 
 ---
 
@@ -833,5 +833,148 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 
 - `flutter analyze` — No issues found!
 - `build_runner` — Geração de código Freezed e JSON concluída.
+
+---
+
+## Task 24
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.1 — Team Management Screen
+
+### O que foi feito
+
+- **Backend:**
+  - Adição de rotas CRUD em `app/routers/users.py` para listagem de usuários com filtros de `role` e `is_active` (`GET /api/users`), e atualização de role/status de atividade (`PATCH /api/users/{user_id}`).
+  - Adição de validação para impedir que um administrador desative a própria conta.
+- **Mobile - Gestão de Equipe (Sessão 14.1):**
+  - Criação da tela de gestão de equipe em `features/inspection/presentation/team_management_screen.dart` conforme especificações de layout (Header com gradiente e contador dinâmico, lista de cartões com dot pulsante para inspeções críticas e botão para atribuição).
+  - Implementação do bottom sheet de atribuição `AssignInspectorSheet` em `features/inspection/presentation/widgets/assign_inspector_sheet.dart` listando inspetores ativos e permitindo atribuição rápida.
+  - Implementação do `UserRepository` em `features/auth/data/user_repository.dart` para comunicação com os endpoints do backend.
+  - Criação do `TeamManagementCubit` e `TeamManagementState` com Freezed para gerenciar o estado da fila de atribuição.
+  - Atualização do `router.dart` para registrar a rota `/team`, direcionando para `TeamManagementScreen`, e implementação do redirecionamento baseado em roles (RBAC) para garantir que apenas gestores e administradores acessem rotas administrativas.
+  - Registro dos serviços e Cubits no `service_locator.dart`.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/users.py` — completo.
+- `mobile/lib/features/auth/data/user_repository.dart` — criado.
+- `mobile/lib/features/inspection/domain/team_management_state.dart` — criado.
+- `mobile/lib/features/inspection/domain/team_management_cubit.dart` — criado.
+- `mobile/lib/features/inspection/presentation/team_management_screen.dart` — criado.
+- `mobile/lib/features/inspection/presentation/widgets/assign_inspector_sheet.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — atualizado.
+- `mobile/lib/app/router.dart` — updated.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+
+---
+
+## Task 25
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.2 — Export Data Screen
+
+### O que foi feito
+
+- **Mobile - Exportação de Dados (Sessão 14.2):**
+  - Criação da tela de exportação em `features/map/presentation/export_data_screen.dart` seguindo a especificação visual do LAYOUT.md (Card de Período, Toggle Chips para filtrar status de resolvidas/abertas/críticas, e FormatCards para escolher GeoJSON ou CSV).
+  - Implementação do método `exportData` no `MapRepository` para se comunicar com o endpoint `GET /api/geo/export` enviando os filtros de formato, status e severidade.
+  - Implementação do fluxo de gravação local do arquivo via `path_provider` em segundo plano para não bloquear a UI, informando o sucesso na snackbar.
+  - Atualização do `router.dart` para registrar e importar a tela `ExportDataScreen` na rota `/export`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/data/map_repository.dart` — atualizado.
+- `mobile/lib/features/map/presentation/export_data_screen.dart` — criado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+
+---
+
+## Task 26
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.3 — User Management Screen
+
+### O que foi feito
+
+- **Mobile - Gestão de Usuários (Sessão 14.3):**
+  - Criação da tela de gestão de usuários em `features/auth/presentation/user_management_screen.dart` conforme especificações visuais do LAYOUT.md (ícone de escudo com título e badge Admin, barra de pesquisa local responsiva, e ListView de UserCards).
+  - Implementação do `UserCard` apresentando CircleAvatar customizado por papel e status do usuário (ícone `userX` vermelho se inativo), nome, e-mail, badge do papel em CAPSLOCK, e menu popup para ações administrativas.
+  - Implementação das ações administrativas: alterar papel (Admin, Gestor, Inspetor) e habilitar/desativar a conta do usuário.
+  - Implementação de regras de segurança na UI: o administrador logado não pode desativar a própria conta no PopupMenu.
+  - Criação do `UserManagementCubit` e `UserManagementState` com Freezed para gerenciar o estado da listagem, busca e atualizações.
+  - Atualização do `router.dart` para importar a tela `UserManagementScreen` e mapeá-la na rota `/users`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/auth/domain/user_management_state.dart` — criado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — criado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — atualizado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+
+---
+
+## Task 27
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.4 — Testes de widget + análise final
+
+### O que foi feito
+
+- **Mobile - Testes de Widget e Estabilidade (Sessão 14.4):**
+  - Criação de testes de widget para `SeverityBadge` em `test/widgets/severity_badge_test.dart` validando as cores de fundo e texto para todas as severidades (crítico, moderado, baixo, pendente).
+  - Criação de testes de widget para `AiResultCard` em `test/widgets/ai_result_card_test.dart` validando se o botão "Confirmar" está habilitado apenas se a confiança for maior ou igual a 0.55.
+  - Criação de testes de widget para `InspectionCard` em `test/widgets/inspection_card_test.dart` validando o layout (sem border-left), presença do badge de severidade e comportamento de navegação (pop do roteador assíncrono para concluir o callback `onTap`).
+  - Correção de testes de unidade quebrados em `auth_cubit_test.dart` (mock do helper `updateFcmToken` e do cache de usuário `saveUser`) e em `models_test.dart` (atualização do payload de parse JSON do modelo `Inspection` para conter `title` e `location`).
+  - Execução e validação das ferramentas estáticas (`flutter analyze` com zero warnings) e da suíte de testes (`flutter test` com todos os 21 testes passando com sucesso).
+
+### Estado dos arquivos tocados
+
+- `mobile/test/widgets/severity_badge_test.dart` — criado.
+- `mobile/test/widgets/ai_result_card_test.dart` — criado.
+- `mobile/test/widgets/inspection_card_test.dart` — criado.
+- `mobile/test/features/auth/auth_cubit_test.dart` — atualizado.
+- `mobile/test/shared/models_test.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `flutter test` — All 21 tests passed!
+
+---
+
+### ✅ Checklist de conclusão da Sprint 14 — Mobile feature-complete
+
+```
+[✅] Team Management: fila de atribuição e assign inspector funcionam
+[✅] Export: GeoJSON e CSV baixados no dispositivo
+[✅] User Management: avatares coloridos, desativar/reativar funciona
+[✅] flutter analyze lib/ → No issues found
+[✅] flutter test test/ → All tests passed
+[✅] Dark mode: todas as telas testadas
+[✅] PROGRESS_MOBILE.md atualizado com data de conclusão
+[✅] SPRINTS_MOBILE.md: todas as sprints marcadas ✅
+```
 
 ---
