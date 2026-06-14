@@ -9,6 +9,8 @@ import 'package:vistor_ai_mobile/core/services/theme_service.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/shared/models/user.dart';
+import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -72,13 +74,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _SettingsTile(
                       icon: LucideIcons.user,
                       title: "Editar perfil",
-                      onTap: () {},
+                      onTap: () => _showEditProfileDialog(context, user),
                     ),
                     const Divider(),
                     _SettingsTile(
                       icon: LucideIcons.lock,
                       title: "Segurança e Senha",
-                      onTap: () {},
+                      onTap: () => _showChangePasswordDialog(context),
                     ),
                     const Divider(),
                     _SettingsTile(
@@ -98,6 +100,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: LucideIcons.users,
                           title: "Gestão de Usuários",
                           onTap: () => context.push('/users'),
+                        ),
+                        const Divider(),
+                        _SettingsTile(
+                          icon: LucideIcons.settings,
+                          title: "Configurações do Sistema",
+                          onTap: () => context.push('/admin/settings'),
                         ),
                         const Divider(),
                       ],
@@ -384,6 +392,257 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context, User user) {
+    final nameController = TextEditingController(text: user.name);
+    final emailController = TextEditingController(text: user.email);
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Editar Perfil'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome',
+                        prefixIcon: Icon(LucideIcons.user, size: 20),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor, insira o seu nome.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'E-mail',
+                        prefixIcon: Icon(LucideIcons.mail, size: 20),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor, insira o seu e-mail.';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          return 'Insira um e-mail válido.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (formKey.currentState?.validate() ?? false) {
+                            setState(() {
+                              isSaving = true;
+                            });
+                            try {
+                              await context.read<AuthCubit>().updateProfile(
+                                    name: nameController.text.trim(),
+                                    email: emailController.text.trim(),
+                                  );
+                              if (context.mounted) {
+                                Navigator.pop(dialogContext);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Perfil atualizado com sucesso!'),
+                                    backgroundColor: AppColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              setState(() {
+                                isSaving = false;
+                              });
+                              if (context.mounted) {
+                                showErrorSnackbar(context, e.toString());
+                              }
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Salvar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Alterar Senha'),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: currentPasswordController,
+                        obscureText: obscureCurrent,
+                        decoration: InputDecoration(
+                          labelText: 'Senha Atual',
+                          prefixIcon: const Icon(LucideIcons.lock, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscureCurrent ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
+                            onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor, insira a senha atual.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: newPasswordController,
+                        obscureText: obscureNew,
+                        decoration: InputDecoration(
+                          labelText: 'Nova Senha',
+                          prefixIcon: const Icon(LucideIcons.shieldAlert, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscureNew ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
+                            onPressed: () => setState(() => obscureNew = !obscureNew),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor, insira a nova senha.';
+                          }
+                          if (value.length < 8) {
+                            return 'A senha deve ter pelo menos 8 caracteres.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: confirmPasswordController,
+                        obscureText: obscureConfirm,
+                        decoration: InputDecoration(
+                          labelText: 'Confirmar Nova Senha',
+                          prefixIcon: const Icon(LucideIcons.shieldCheck, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscureConfirm ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
+                            onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Confirme a nova senha.';
+                          }
+                          if (value != newPasswordController.text) {
+                            return 'As senhas não coincidem.';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (formKey.currentState?.validate() ?? false) {
+                            setState(() {
+                              isSaving = true;
+                            });
+                            try {
+                              await context.read<AuthCubit>().changePassword(
+                                    currentPassword: currentPasswordController.text,
+                                    newPassword: newPasswordController.text,
+                                  );
+                              if (context.mounted) {
+                                Navigator.pop(dialogContext);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Senha alterada com sucesso!'),
+                                    backgroundColor: AppColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              setState(() {
+                                isSaving = false;
+                              });
+                              if (context.mounted) {
+                                showErrorSnackbar(context, e.toString());
+                              }
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Alterar Senha'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

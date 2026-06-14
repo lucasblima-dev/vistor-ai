@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_current_user, require_role
 from app.models.user import User, UserRole
-from app.schemas.user import UserOut
+from app.schemas.user import UserOut, UserUpdate, UserChangePassword
 
 router = APIRouter()
 
@@ -21,6 +21,47 @@ async def update_fcm_token(
     current_user: User = Depends(get_current_user),
 ):
     current_user.fcm_token = payload.fcm_token
+    await db.commit()
+    return
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    payload: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if payload.email is not None and payload.email != current_user.email:
+        query = select(User).where(User.email == payload.email)
+        existing = await db.scalar(query)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Este email já está sendo utilizado."
+            )
+        current_user.email = payload.email
+    
+    if payload.name is not None:
+        current_user.name = payload.name
+        
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    payload: UserChangePassword,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.services.auth_service import pwd_context
+    
+    if not pwd_context.verify(payload.current_password, current_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A senha atual está incorreta."
+        )
+        
+    current_user.password = pwd_context.hash(payload.new_password)
     await db.commit()
     return
 

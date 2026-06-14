@@ -145,5 +145,47 @@ class AuthRepository {
       // Falha silenciosa para não travar o login
     }
   }
+
+  Future<User> updateMe({required String name, required String email}) async {
+    try {
+      final response = await _apiClient.dio.patch(
+        AppEndpoints.updateMe,
+        data: {
+          'name': name,
+          'email': email,
+        },
+      );
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data);
+      }
+      final message = response.data['detail'] ?? 'Erro ao atualizar dados do perfil';
+      throw AuthException(message);
+    } on DioException catch (e) {
+      final message = e.response?.data['detail'] ?? 'Erro ao atualizar dados do perfil';
+      throw AuthException(message);
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        AppEndpoints.changePassword,
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        final message = response.data['detail'] ?? 'Erro ao alterar senha';
+        throw AuthException(message);
+      }
+    } on DioException catch (e) {
+      final message = e.response?.data['detail'] ?? 'Erro ao alterar senha';
+      throw AuthException(message);
+    }
+  }
 }
 

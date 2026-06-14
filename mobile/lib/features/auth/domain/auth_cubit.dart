@@ -117,4 +117,32 @@ class AuthCubit extends Cubit<AuthState> {
       await _authRepository.updateFcmToken(token);
     }
   }
+
+  Future<void> updateProfile({required String name, required String email}) async {
+    try {
+      final updatedUser = await _authRepository.updateMe(name: name, email: email);
+      await _tokenStorage.saveUser(updatedUser);
+      emit(AuthState.authenticated(updatedUser));
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Erro inesperado ao atualizar perfil.');
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _authRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Erro inesperado ao alterar senha.');
+    }
+  }
 }
