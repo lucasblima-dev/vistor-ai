@@ -32,6 +32,7 @@ void main() {
     await tester.tap(confirmBtnFinder);
     await tester.pump();
     expect(confirmed, isTrue);
+    expect(corrected, isFalse);
   });
 
   testWidgets('Deve desabilitar o botão de confirmar e mostrar classificação incerta quando score < 0.55', (WidgetTester tester) async {
@@ -63,5 +64,6 @@ void main() {
     await tester.tap(confirmBtnFinder);
     await tester.pump();
     expect(confirmed, isFalse);
+    expect(corrected, isFalse);
   });
 }

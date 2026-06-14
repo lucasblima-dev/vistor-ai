@@ -48,6 +48,7 @@ class AppRoutes {
   static const String teamManagement = '/team';
   static const String userManagement = '/users';
   static const String exportData = '/export';
+  static const String allReports = '/reports-all';
 
   // Utilitário
   static const String offline = '/offline';
@@ -67,6 +68,7 @@ class AppScaffold extends StatelessWidget {
           orElse: () => null,
         );
     final isAdmin = user?.role == UserRole.admin;
+    final isManager = user?.role == UserRole.manager;
 
     return Scaffold(
       body: Column(
@@ -97,24 +99,43 @@ class AppScaffold extends StatelessWidget {
                   label: 'Perfil',
                 ),
               ]
-            : const [
-                NavigationDestination(
-                  icon: Icon(LucideIcons.list),
-                  label: 'Inspeções',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.map),
-                  label: 'Mapa',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.fileText),
-                  label: 'Laudos',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.user),
-                  label: 'Perfil',
-                ),
-              ],
+            : isManager
+                ? const [
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.list),
+                      label: 'Inspeções',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.map),
+                      label: 'Mapa',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.userCheck),
+                      label: 'Equipe',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.user),
+                      label: 'Perfil',
+                    ),
+                  ]
+                : const [
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.list),
+                      label: 'Inspeções',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.map),
+                      label: 'Mapa',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.fileText),
+                      label: 'Laudos',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(LucideIcons.user),
+                      label: 'Perfil',
+                    ),
+                  ],
       ),
     );
   }
@@ -284,7 +305,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Laudos -> Exportar (Admin)
+          // Aba: Laudos -> Exportar (Admin) / Equipe (Gestor)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -296,6 +317,9 @@ GoRouter buildRouter(AuthCubit authCubit) {
                       );
                   if (user?.role == UserRole.admin) {
                     return const ExportDataScreen();
+                  }
+                  if (user?.role == UserRole.manager) {
+                    return const TeamManagementScreen();
                   }
                   return const ReportListScreen();
                 },
@@ -350,6 +374,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: AppRoutes.userManagement,
         builder: (context, state) => const UserManagementScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.allReports,
+        builder: (context, state) => const ReportListScreen(),
       ),
 
       // Utilitário

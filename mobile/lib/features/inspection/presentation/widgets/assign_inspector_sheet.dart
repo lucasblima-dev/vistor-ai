@@ -28,6 +28,12 @@ class _AssignInspectorSheetState extends State<AssignInspectorSheet> {
     }
     return parts[0][0].toUpperCase();
   }
+ 
+  @override
+  void initState() {
+    super.initState();
+    widget.cubit.loadQueue();
+  }
 
   @override
   Widget build(BuildContext context) {

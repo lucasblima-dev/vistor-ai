@@ -93,6 +93,8 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         format: _selectedFormat,
         status: statusFilter,
         severity: severityFilter,
+        startDate: _selectedDateRange?.start,
+        endDate: _selectedDateRange?.end,
       );
 
       // 2. Obtém diretório local de documentos do App

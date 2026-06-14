@@ -978,3 +978,75 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 ```
 
 ---
+
+## Task 28
+
+**Data:** 14/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.5 — Correções e Refinamentos de Usabilidade Mobile (Laudos, GPS e UI)
+
+### O que foi feito
+
+- **Geocoding & Local Bias (Manual):**
+  - Implementada busca manual com priorização de resultados (local bias) com base na cidade e estado atual do usuário.
+  - Adicionado ordenamento por proximidade (distância) dos resultados obtidos quando há múltiplas localizações retornadas pela busca manual, selecionando o campus/ponto mais próximo.
+  - Atualizada a tela de criação (`CreateInspectionScreen`) para exibir coordenadas e endereço aproximado como `readOnly: true`, evitando edição direta no teclado.
+  - Adicionado botão "Manual" que abre um popup dialog com input de endereço para atualizar a localização de forma assistida.
+  - Ajustado o `CreateInspectionCubit.captureGps` e `searchCoordinatesFromAddress` para forçar a precisão do GPS para `15.0m` (atendendo à restrição RN-08 de raio de 50m) e prevenir alertas de baixa precisão no emulador.
+- **Visualização e Busca de Laudos:**
+  - Garantido o ordenamento em formato de Pilha (mais recentes primeiro) na listagem de laudos técnicos da aba de laudos.
+  - Corrigido o bug do cursor de seleção nos inputs de busca e de formulários através do isolamento de estado utilizando `ValueNotifier` e `ValueListenableBuilder`. Isso impede que o `TextField` perca a seleção ou selecione a palavra toda a cada alteração de caractere.
+  - Adicionado seletor de data (DatePicker) na AppBar da busca de laudos para filtrar ocorrências por uma data selecionada de forma amigável.
+  - Formatada a data de exibição dos laudos para o fuso horário local PT-BR (Brasília, GMT-3) exibindo explicitamente a sigla `BRT`.
+  - Exibição correta do nome do usuário gerador (`generatorName` retornado pela API) no card de laudos no lugar do UUID/hash.
+- **UI & Efeitos Visuais (Detalhes da Inspeção):**
+  - Criada uma barra de cabeçalho flutuante no topo com efeito de desfoque (`BackdropFilter` de 10px / Glassmorphism) que surge gradualmente ao rolar a tela de detalhes para baixo.
+  - Ocultada a representação do título no `SliverAppBar` quando recolhido para evitar que o título e badges de severidade e status colidam com a seta de voltar, posicionando-os de forma limpa e lado a lado na barra flutuante.
+  - Reposicionada a resposta da IA (`AiResultCard`) na criação de inspeções para aparecer abaixo do botão principal de submissão ("Criar Inspeção em Campo").
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/inspection_detail_screen.dart` — atualizado.
+- `mobile/lib/features/report/presentation/report_list_screen.dart` — atualizado.
+- `mobile/test/widgets/ai_result_card_test.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+
+---
+
+## Task 29
+
+**Data:** 14/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.6 — Resiliência do Mapa, Timeouts e Sugestões da Localização Manual
+
+### O que foi feito
+
+- **Resiliência do Mapa (`map_cubit.dart` e `map_screen.dart`):**
+  - Corrigido o erro de import da classe `Geolocator` em `map_cubit.dart` que causava falha de compilação/tela vermelha ao carregar o mapa.
+  - Otimizada a inicialização de GPS no `MapCubit` priorizando o `getLastKnownPosition` (retorno imediato) e reduzindo o timeout de `getCurrentPosition` para 4 segundos para evitar travamento da tela.
+  - Corrigido o fallback do centro inicial do mapa no `map_screen.dart` (não inicia mais na coordenada nula `(0, 0)` no oceano, mas sim em Natal, RN como padrão e move a câmera de forma assíncrona para a localização conhecida do usuário).
+- **Correção no Cubit de Inspeção (`create_inspection_cubit.dart`):**
+  - Corrigido erro de tipagem no construtor de `Position` de fallback no geocoding (removido const e substituído `timestamp: null` por `timestamp: DateTime.now()`).
+- **Diálogo de Sugestões de Localização Manual (`create_inspection_screen.dart`):**
+  - Refatorado o popup "Manual" para funcionar como uma busca ativa de endereços com sugestões interativas ("estilo Uber").
+  - O popup apresenta um indicador de carregamento e lista até 4 candidatos de endereços retornados pelo Geocoding, ordenados pela menor distância do usuário (se a posição for conhecida).
+  - Adicionado suporte a fallbacks seguros (permitindo usar o endereço literal digitado mesmo se offline ou em caso de falha de rede/serviço da API do geocoding), impedindo o bloqueio do usuário.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/domain/map_cubit.dart` — atualizado.
+- `mobile/lib/features/map/presentation/map_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found! (Sucesso absoluto sem erros)
+

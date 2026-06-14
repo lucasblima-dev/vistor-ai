@@ -10,6 +10,8 @@ class ReportOut(BaseModel):
     id: UUID
     inspection_id: UUID
     generated_by: UUID
+    generator_name: Optional[str] = None
+    inspection_title: Optional[str] = None
     minio_key: str
     sha256: str
     download_url: Optional[str] = None

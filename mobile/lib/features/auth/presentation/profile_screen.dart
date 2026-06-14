@@ -108,6 +108,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const Divider(),
                       _SettingsTile(
+                        icon: LucideIcons.fileText,
+                        title: "Laudos Técnicos",
+                        onTap: () => context.push('/reports-all'),
+                      ),
+                      const Divider(),
+                      _SettingsTile(
                         icon: LucideIcons.download,
                         title: "Exportação de Dados",
                         onTap: () => context.push('/export'),

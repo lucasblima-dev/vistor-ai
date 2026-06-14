@@ -66,6 +66,7 @@ async def create(db: AsyncSession, payload: InspectionCreate, owner_id: UUID) ->
     
     query = select(Inspection).where(Inspection.id == inspection.id).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     )
     result = await db.execute(query)
@@ -81,6 +82,7 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
         )
     ).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     )
     result = await db.execute(query)
@@ -115,6 +117,7 @@ async def list_by_user(
 ) -> List[Inspection]:
     query = select(Inspection).where(Inspection.deleted_at.is_(None)).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     )
     
@@ -187,6 +190,7 @@ async def update(
 
     query = select(Inspection).where(Inspection.id == inspection.id).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     )
     result = await db.execute(query)
@@ -249,6 +253,7 @@ async def get_nearby(
         )
     ).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     ).order_by("distance_m")
     
@@ -276,6 +281,7 @@ async def reclassify(db: AsyncSession, inspection_id: UUID, current_user: User) 
     # Recarrega a inspeção para retornar com as alterações
     query = select(Inspection).where(Inspection.id == inspection.id).options(
         selectinload(Inspection.inspector),
+        selectinload(Inspection.assigned),
         selectinload(Inspection.media)
     )
     result = await db.execute(query)

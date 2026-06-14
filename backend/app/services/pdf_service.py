@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.models.user import User
 from app.models.inspection import Inspection
 from app.models.media import Media, MediaType
 from app.models.report import Report
@@ -68,6 +69,12 @@ async def generate_report(inspection_id: uuid.UUID, db: AsyncSession, generated_
             logger.error(f"Inspeção {inspection_id} não encontrada para geração de laudo")
             raise ValueError(f"Inspeção {inspection_id} não encontrada")
 
+        # Busca o usuário gerador para colocar seu nome no laudo
+        user_query = select(User).where(User.id == generated_by)
+        user_result = await db.execute(user_query)
+        generator_user = user_result.scalar_one_or_none()
+        generator_name = generator_user.name if generator_user else "Sistema/Desconhecido"
+
         # Verifica se o relatório já existe (idempotência)
         existing_report_query = select(Report).where(Report.inspection_id == inspection_id)
         existing_result = await db.execute(existing_report_query)
@@ -88,7 +95,8 @@ async def generate_report(inspection_id: uuid.UUID, db: AsyncSession, generated_
             lat=loc.lat,
             lon=loc.lon,
             media_urls=media_urls,
-            report_sha256=None # Será atualizado depois do cálculo
+            report_sha256=None, # Será atualizado depois do cálculo
+            generator_name=generator_name
         )
 
         pdf_bytes = HTML(string=html_str).write_pdf()
@@ -101,7 +109,8 @@ async def generate_report(inspection_id: uuid.UUID, db: AsyncSession, generated_
             lat=loc.lat,
             lon=loc.lon,
             media_urls=media_urls,
-            report_sha256=sha256_hash
+            report_sha256=sha256_hash,
+            generator_name=generator_name
         )
         pdf_bytes = HTML(string=html_str).write_pdf()
         sha256_hash = hashlib.sha256(pdf_bytes).hexdigest()

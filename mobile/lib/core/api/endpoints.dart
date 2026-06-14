@@ -17,6 +17,7 @@ class AppEndpoints {
   // Geo
   static const String nearby = '/geo/nearby';
   static const String export = '/geo/export';
+  static const String heatmap = '/geo/heatmap';
 
   // Media
   static const String presign = '/media/presign';

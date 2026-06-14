@@ -72,8 +72,8 @@ class _MapFilterSheetState extends State<MapFilterSheet> {
           Slider(
             value: _currentRadius,
             min: 50,
-            max: 5000,
-            divisions: 99,
+            max: 50000,
+            divisions: 500,
             onChanged: (value) => setState(() => _currentRadius = value),
           ),
           

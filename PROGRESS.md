@@ -1161,3 +1161,37 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 - Recuperação automática de lockout administrativo validada localmente.
 - Proteções de alteração de papel e desativação validadas com sucesso na API e na interface Flutter.
 - Fluxo de menus do administrador validado no aplicativo.
+
+---
+
+## Task 32
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes Finais e Correções de Bugs (Mapa & Localização Manual)
+**Sessão:** Resiliência de Mapa, Timeouts e Sugestões da Localização Manual no Mobile
+
+### O que foi feito
+
+- **Resiliência do Mapa (`map_cubit.dart` e `map_screen.dart`):**
+  - Corrigido o erro de import do `Geolocator` no `map_cubit.dart` que quebrava a inicialização e a tela do mapa.
+  - Implementado carregamento rápido do mapa priorizando `getLastKnownPosition` e com timeout reduzido de 4 segundos na posição atual para evitar que telas fiquem travadas por muito tempo se o GPS demorar.
+  - Ajustado o fallback de centralização inicial do mapa no `map_screen.dart` para Natal (RN) em vez de `(0, 0)` no oceano, além de mover a câmera assincronamente para a última posição conhecida do usuário no `initState`.
+- **Correção no Cubit de Criação (`create_inspection_cubit.dart`):**
+  - Resolvido erro de tipo do construtor de `Position` de fallback no geocoding (removido const e substituído `timestamp: null` por `timestamp: DateTime.now()`).
+- **Sugestões de Localização Manual (`create_inspection_screen.dart`):**
+  - Refatorado o popup "Manual" de endereço para exibir uma busca de endereços interativa com lista de sugestões ("estilo Uber").
+  - O popup apresenta carregamento e exibe os candidatos de endereço mais próximos do usuário, ordenados por distância.
+  - Adicionado suporte a fallbacks seguros (permitindo prosseguir com o endereço digitado mesmo se offline/sem conexão com o serviço da API do geocoding), evitando o bloqueio da criação de inspeções.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/domain/map_cubit.dart` — atualizado.
+- `mobile/lib/features/map/presentation/map_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found! (Sucesso absoluto sem erros)
+
