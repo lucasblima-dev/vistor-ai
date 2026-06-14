@@ -1255,7 +1255,7 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 **Data:** 14/06/2026
 
 **Sprint:** Customização de Abas Dinâmicas por Role e Cadastro de Usuários por Admin
-**Sessão:** Roteamento de Abas Customizado para Gestor/Admin, Tela de Logs Standalone e Fluxo Integrado de Criação de Usuários
+**Sessão:** Roteamento de Abas Customizado para Gestor/Admin, Tela de Logs Standalone, Ajustes de IA e Fluxo Integrado de Criação de Usuários
 
 ### O que foi feito
 
@@ -1263,14 +1263,15 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
   - Implementado o endpoint seguro `POST /api/users/` em `routers/users.py`, restrito a usuários com privilégio de administrador (`require_role(["admin"])`).
   - O endpoint realiza verificação de duplicidade de e-mail e chama o motor de persistência padrão, gerando uma entrada de rastreabilidade no log de auditoria com a ação `'user_created'`.
   - Criada suíte de testes `test_users.py` no backend validando os fluxos com sucesso, bloqueio de permissão de não-administradores (retornando HTTP 403) e erro de email duplicado (retornando HTTP 409).
-- **Mobile (Roteamento Dinâmico por Role e Cadastro de Usuários):**
-  - Desenvolvida a tela independente `AuditLogsScreen` (`lib/features/auth/presentation/audit_logs_screen.dart`) portando o histórico de auditoria e acesso fácil às configurações do sistema via cabeçalho.
+- **Mobile (Roteamento Dinâmico por Role, Configurações de IA e Cadastro de Usuários):**
+  - Desenvolvida a tela independente `AuditLogsScreen` (`lib/features/auth/presentation/audit_logs_screen.dart`) portando o histórico de auditoria com formatação e parsing resiliente contra erros de tipo de índice em tempo de execução.
+  - Refatorada a tela de configurações do sistema (`AdminSettingsScreen`) para remover o tab bar e o controlador de abas, transformando-a na tela exclusiva de "Configurações de IA".
   - Integrada a funcionalidade de criação no `UserRepository` e no `UserManagementCubit.createUser`.
   - Atualizada a interface de gerenciamento de usuários (`UserManagementScreen`) adicionando um `FloatingActionButton` que abre o formulário de cadastro com validação de formato e seleção do cargo (Admin, Gestor, Inspetor).
   - Reconfigurado o GoRouter e o `AppScaffold` em `router.dart` de modo a mapear de forma dinâmica as abas inferiores e destinos baseando-se no cargo do usuário logado:
     - **Inspector:** Inspeções | Mapa | Laudos | Perfil
     - **Gestor:** Inspeções | Exportar | Equipe | Perfil
-    - **Admin:** Logs | Usuários | Exportar | Perfil
+    - **Admin:** Logs | IA | Usuários | Perfil
 
 ### Estado dos arquivos tocados
 
@@ -1289,4 +1290,47 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 - `flutter test` — Todos os 21 testes mobile aprovados.
 
 ---
+
+## Task 35
+
+**Data:** 14/06/2026
+
+**Sprint:** Estabilização e Tratamento Resiliente de Erros de Conexão/Deserialização
+**Sessão:** Paginador do Log de Auditoria e Resiliência no IP Address
+
+### O que foi feito
+
+- **Backend (Paginação de logs de auditoria & IP Address):**
+  - Adicionado suporte ao parâmetro query `offset: int = Query(0, ge=0)` na rota `/api/audit-logs/` em `backend/app/routers/audit.py`, aplicando-o na query de banco de dados para suportar lazy loading/paginação de logs no frontend.
+  - Mantido `@field_validator('ip_address', mode='before')` no schema Pydantic `AuditLogOut` (`app/schemas/audit_log.py`) para converter automaticamente instâncias de `IPv4Address` e `IPv6Address` para string, prevenindo falhas de serialização no banco de dados.
+- **Mobile (Logs de Auditoria Paginados de 5 em 5):**
+  - Removido o ícone de engrenagem (configs) do topo da tela `AuditLogsScreen`, já que existe uma aba dedicada às configurações de IA.
+  - Atualizado `AdminRepository.getAuditLogs` para aceitar parâmetros `limit` e `offset`.
+  - Atualizado `AdminSettingsState` e `AdminSettingsCubit` para gerenciar a paginação usando `isLoadingMore` e `hasMore`.
+  - Atualizada a `AuditLogsScreen` para exibir um botão "Carregar mais 5 logs" no fim da lista quando `state.hasMore` for verdadeiro, ou um `CircularProgressIndicator` se `state.isLoadingMore` for verdadeiro, prevenindo sobrecarga desnecessária na busca do banco.
+- **Mobile (Prevenção de TypeError em Exceções de API):**
+  - Implementada a extensão `DioExceptionExtension` com o método helper `getErrorMessage()` em `core/api/api_client.dart` para parsear as mensagens de erro de forma resiliente, impedindo o erro fatal `type 'String' is not a subtype of type 'int' of index`.
+  - Atualizados os repositórios (`admin_repository.dart`, `auth_repository.dart`, `user_repository.dart`, `inspection_repository.dart`) para consumirem a extensão.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/audit.py` — atualizado.
+- `backend/app/schemas/audit_log.py` — atualizado.
+- `mobile/lib/core/api/api_client.dart` — atualizado.
+- `mobile/lib/features/auth/data/admin_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/auth_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/user_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_state.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/audit_logs_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/data/inspection_repository.dart` — atualizado.
+
+### Validações que passaram
+
+- `pytest` — Todos os 45 testes do backend aprovados.
+- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- `flutter test` — Todos os 21 testes mobile aprovados.
+
+---
+
 

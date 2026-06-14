@@ -17,6 +17,7 @@ async def list_audit_logs(
     entity: Optional[str] = None,
     entity_id: Optional[UUID] = None,
     limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_role(["admin"])),
 ):
@@ -27,7 +28,7 @@ async def list_audit_logs(
     if entity_id is not None:
         query = query.where(AuditLog.entity_id == entity_id)
         
-    query = query.order_by(AuditLog.created_at.desc()).limit(limit)
+    query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)
     
     result = await db.execute(query)
     logs = []
@@ -35,6 +36,8 @@ async def list_audit_logs(
         audit_log, user_name = row
         # Atribui dinamicamente o atributo user_name para conversão do Pydantic
         audit_log.user_name = user_name
+        if audit_log.ip_address is not None:
+            audit_log.ip_address = str(audit_log.ip_address)
         logs.append(audit_log)
         
     return logs

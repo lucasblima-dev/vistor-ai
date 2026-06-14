@@ -29,8 +29,7 @@ class UserRepository {
       }
       throw Exception('Erro ao buscar usuários');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao buscar usuários';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao buscar usuários'));
     }
   }
 
@@ -46,8 +45,7 @@ class UserRepository {
       }
       throw Exception('Erro ao atualizar papel do usuário');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao atualizar papel do usuário';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao atualizar papel do usuário'));
     }
   }
 
@@ -63,8 +61,7 @@ class UserRepository {
       }
       throw Exception('Erro ao alterar status do usuário');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao alterar status do usuário';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao alterar status do usuário'));
     }
   }
 
@@ -90,8 +87,7 @@ class UserRepository {
       }
       throw Exception('Erro ao criar usuário');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao criar usuário';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao criar usuário'));
     }
   }
 }

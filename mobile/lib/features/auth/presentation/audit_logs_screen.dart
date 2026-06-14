@@ -6,8 +6,6 @@ import 'package:vistor_ai_mobile/core/di/service_locator.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/admin_settings_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/admin_settings_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
-import 'package:vistor_ai_mobile/app/router.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:convert';
 
 class AuditLogsScreen extends StatefulWidget {
@@ -45,6 +43,11 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   String _prettyJson(dynamic val) {
     if (val == null) return 'Nenhum';
     try {
+      if (val is String) {
+        final decoded = json.decode(val);
+        const encoder = JsonEncoder.withIndent('  ');
+        return encoder.convert(decoded);
+      }
       const encoder = JsonEncoder.withIndent('  ');
       return encoder.convert(val);
     } catch (_) {
@@ -85,14 +88,6 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                         ),
                       ),
                     ],
-                  ),
-                  // Configs Button (to access AI settings, since they were in the same screen previously)
-                  IconButton(
-                    icon: Icon(
-                      LucideIcons.settings,
-                      color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
-                    ),
-                    onPressed: () => context.push(AppRoutes.adminSettings),
                   ),
                 ],
               ),
@@ -142,18 +137,49 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                       );
                     }
 
+                    final showLoadMore = state.hasMore;
                     return RefreshIndicator(
                       onRefresh: () => _cubit.loadSettingsAndLogs(),
                       child: ListView.separated(
-                        itemCount: state.auditLogs.length,
+                        itemCount: state.auditLogs.length + (showLoadMore ? 1 : 0),
                         separatorBuilder: (context, index) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
+                          if (index == state.auditLogs.length) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                child: state.isLoadingMore
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : TextButton.icon(
+                                        onPressed: () => _cubit.loadMoreLogs(),
+                                        icon: const Icon(LucideIcons.plus, size: 16),
+                                        label: const Text(
+                                          'Carregar mais 5 logs',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: isDark ? AppColors.primaryDark : AppColors.primary,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          }
+
                           final log = state.auditLogs[index];
-                          final String action = log['action'] ?? '';
-                          final String entity = log['entity'] ?? '';
-                          final String userName = log['user_name'] ?? 'Sistema';
-                          final String timestamp = _formatDateTime(log['created_at']);
-                          final String entityId = log['entity_id'] ?? '';
+                          
+                          final String action = log['action']?.toString() ?? '';
+                          final String entity = log['entity']?.toString() ?? '';
+                          final String userName = log['user_name']?.toString() ?? 'Sistema';
+                          final String timestamp = _formatDateTime(log['created_at']?.toString());
+                          final String entityId = log['entity_id']?.toString() ?? '';
 
                           IconData icon;
                           Color color;

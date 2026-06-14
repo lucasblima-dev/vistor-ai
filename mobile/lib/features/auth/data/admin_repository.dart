@@ -15,8 +15,7 @@ class AdminRepository {
       }
       throw Exception('Erro ao carregar configurações de IA');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao carregar configurações de IA';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao carregar configurações de IA'));
     }
   }
 
@@ -37,16 +36,18 @@ class AdminRepository {
       }
       throw Exception('Erro ao atualizar configurações de IA');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao atualizar configurações de IA';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao atualizar configurações de IA'));
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAuditLogs() async {
+  Future<List<Map<String, dynamic>>> getAuditLogs({int limit = 50, int offset = 0}) async {
     try {
       final response = await _apiClient.dio.get(
         AppEndpoints.auditLogs,
-        queryParameters: {'limit': 50},
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
@@ -54,8 +55,7 @@ class AdminRepository {
       }
       throw Exception('Erro ao carregar logs de auditoria');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao carregar logs de auditoria';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao carregar logs de auditoria'));
     }
   }
 }

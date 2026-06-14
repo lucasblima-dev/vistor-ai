@@ -507,14 +507,12 @@ class _SettingsCard extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Widget? trailing;
   final VoidCallback onTap;
   final Color? color;
 
   const _SettingsTile({
     required this.icon,
     required this.title,
-    this.trailing,
     required this.onTap,
     this.color,
   });
@@ -540,7 +538,7 @@ class _SettingsTile extends StatelessWidget {
           color: color,
         ),
       ),
-      trailing: trailing ?? const Icon(LucideIcons.chevronRight, size: 18),
+      trailing: const Icon(LucideIcons.chevronRight, size: 18),
     );
   }
 }

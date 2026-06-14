@@ -51,8 +51,7 @@ class AuthRepository {
           e.type == DioExceptionType.connectionError) {
         throw AuthException('Não foi possível conectar ao servidor. Verifique sua conexão e se o backend está rodando.');
       }
-      final message = e.response?.data['detail'] ?? 'Erro inesperado no servidor';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro inesperado no servidor'));
     }
   }
 
@@ -83,8 +82,7 @@ class AuthRepository {
           e.type == DioExceptionType.connectionError) {
         throw AuthException('Não foi possível conectar ao servidor. Verifique sua conexão.');
       }
-      final message = e.response?.data['detail'] ?? 'Erro inesperado ao realizar cadastro';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro inesperado ao realizar cadastro'));
     }
   }
 
@@ -130,8 +128,7 @@ class AuthRepository {
       }
       throw AuthException('Não foi possível obter dados do usuário');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao obter dados do usuário';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro ao obter dados do usuário'));
     }
   }
 
@@ -158,11 +155,13 @@ class AuthRepository {
       if (response.statusCode == 200) {
         return User.fromJson(response.data);
       }
-      final message = response.data['detail'] ?? 'Erro ao atualizar dados do perfil';
+      final data = response.data;
+      final message = (data is Map && data['detail'] != null)
+          ? data['detail'].toString()
+          : 'Erro ao atualizar dados do perfil';
       throw AuthException(message);
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao atualizar dados do perfil';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro ao atualizar dados do perfil'));
     }
   }
 
@@ -179,12 +178,14 @@ class AuthRepository {
         },
       );
       if (response.statusCode != 200 && response.statusCode != 204) {
-        final message = response.data['detail'] ?? 'Erro ao alterar senha';
+        final data = response.data;
+        final message = (data is Map && data['detail'] != null)
+            ? data['detail'].toString()
+            : 'Erro ao alterar senha';
         throw AuthException(message);
       }
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao alterar senha';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro ao alterar senha'));
     }
   }
 
@@ -206,11 +207,13 @@ class AuthRepository {
       if (response.statusCode == 200) {
         return User.fromJson(response.data);
       }
-      final message = response.data['detail'] ?? 'Erro ao fazer upload da foto de perfil';
+      final data = response.data;
+      final message = (data is Map && data['detail'] != null)
+          ? data['detail'].toString()
+          : 'Erro ao fazer upload da foto de perfil';
       throw AuthException(message);
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao fazer upload da foto de perfil';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro ao fazer upload da foto de perfil'));
     }
   }
 }

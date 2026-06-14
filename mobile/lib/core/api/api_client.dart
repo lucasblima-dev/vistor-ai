@@ -100,3 +100,16 @@ class ApiClient {
     return dio.post(path, data: data, queryParameters: queryParameters);
   }
 }
+
+extension DioExceptionExtension on DioException {
+  String getErrorMessage([String defaultMessage = 'Erro inesperado no servidor']) {
+    final data = response?.data;
+    if (data is Map && data['detail'] != null) {
+      return data['detail'].toString();
+    }
+    if (data is String && data.isNotEmpty) {
+      return data;
+    }
+    return defaultMessage;
+  }
+}

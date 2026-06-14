@@ -86,12 +86,12 @@ class AppScaffold extends StatelessWidget {
           label: 'Logs',
         ),
         NavigationDestination(
-          icon: Icon(LucideIcons.users),
-          label: 'Usuários',
+          icon: Icon(LucideIcons.cpu),
+          label: 'IA',
         ),
         NavigationDestination(
-          icon: Icon(LucideIcons.download),
-          label: 'Exportar',
+          icon: Icon(LucideIcons.users),
+          label: 'Usuários',
         ),
         NavigationDestination(
           icon: Icon(LucideIcons.user),
@@ -306,7 +306,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Mapa / Usuários / Exportar
+          // Aba: Mapa / IA / Exportar
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -317,7 +317,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         orElse: () => null,
                       );
                   if (user?.role == UserRole.admin) {
-                    return const UserManagementScreen();
+                    return const AdminSettingsScreen();
                   }
                   if (user?.role == UserRole.manager) {
                     return const ExportDataScreen();
@@ -328,7 +328,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Laudos / Equipe / Exportar
+          // Aba: Laudos / Equipe / Usuários
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -339,7 +339,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         orElse: () => null,
                       );
                   if (user?.role == UserRole.admin) {
-                    return const ExportDataScreen();
+                    return const UserManagementScreen();
                   }
                   if (user?.role == UserRole.manager) {
                     return const TeamManagementScreen();

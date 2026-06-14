@@ -6,7 +6,6 @@ import 'package:vistor_ai_mobile/core/di/service_locator.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/admin_settings_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/admin_settings_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
-import 'dart:convert';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -34,106 +33,62 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     super.dispose();
   }
 
-  String _formatDateTime(String? isoString) {
-    if (isoString == null) return '';
-    try {
-      final dt = DateTime.parse(isoString).toLocal();
-      final day = dt.day.toString().padLeft(2, '0');
-      final month = dt.month.toString().padLeft(2, '0');
-      final year = dt.year;
-      final hour = dt.hour.toString().padLeft(2, '0');
-      final minute = dt.minute.toString().padLeft(2, '0');
-      return '$day/$month/$year $hour:$minute';
-    } catch (_) {
-      return isoString;
-    }
-  }
 
-  String _prettyJson(dynamic val) {
-    if (val == null) return 'Nenhum';
-    try {
-      const encoder = JsonEncoder.withIndent('  ');
-      return encoder.convert(val);
-    } catch (_) {
-      return val.toString();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
-        appBar: AppBar(
-          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              LucideIcons.arrowLeft,
-              color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Configurações do Sistema',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+      appBar: AppBar(
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        elevation: 0,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: Icon(
+                  LucideIcons.arrowLeft,
+                  color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
                 ),
-          ),
-          bottom: const TabBar(
-            labelColor: AppColors.primary,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: AppColors.primary,
-            tabs: [
-              Tab(
-                icon: Icon(LucideIcons.cpu),
-                text: 'Modelos de IA',
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text(
+          'Configurações de IA',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-              Tab(
-                icon: Icon(LucideIcons.history),
-                text: 'Logs de Auditoria',
-              ),
-            ],
-          ),
         ),
-        body: BlocConsumer<AdminSettingsCubit, AdminSettingsState>(
-          bloc: _cubit,
-          listener: (context, state) {
-            if (state.error != null) {
-              showErrorSnackbar(context, state.error!);
-            }
-            if (state.successMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.successMessage!),
-                  backgroundColor: AppColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            // Atualizar valores do formulário quando carregados pela primeira vez
-            if (state.modelId.isNotEmpty && _modelController.text.isEmpty && !state.isLoading) {
-              _modelController.text = state.modelId;
-              _threshold = state.confidenceThreshold;
-            }
-
-            if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            return TabBarView(
-              children: [
-                _buildAiSettingsTab(state, isDark),
-                _buildAuditLogsTab(state, isDark),
-              ],
+      ),
+      body: BlocConsumer<AdminSettingsCubit, AdminSettingsState>(
+        bloc: _cubit,
+        listener: (context, state) {
+          if (state.error != null) {
+            showErrorSnackbar(context, state.error!);
+          }
+          if (state.successMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.successMessage!),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
             );
-          },
-        ),
+          }
+        },
+        builder: (context, state) {
+          // Atualizar valores do formulário quando carregados pela primeira vez
+          if (state.modelId.isNotEmpty && _modelController.text.isEmpty && !state.isLoading) {
+            _modelController.text = state.modelId;
+            _threshold = state.confidenceThreshold;
+          }
+
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return _buildAiSettingsTab(state, isDark);
+        },
       ),
     );
   }
@@ -285,143 +240,4 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
   }
 
-  Widget _buildAuditLogsTab(AdminSettingsState state, bool isDark) {
-    if (state.auditLogs.isEmpty) {
-      return const Center(
-        child: Text('Nenhum log de auditoria encontrado.'),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => _cubit.loadSettingsAndLogs(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: state.auditLogs.length,
-        itemBuilder: (context, index) {
-          final log = state.auditLogs[index];
-          final String action = log['action'] ?? '';
-          final String entity = log['entity'] ?? '';
-          final String userName = log['user_name'] ?? 'Sistema';
-          final String timestamp = _formatDateTime(log['created_at']);
-          final String entityId = log['entity_id'] ?? '';
-
-          IconData icon;
-          Color color;
-          switch (action) {
-            case 'create':
-            case 'user_created':
-              icon = LucideIcons.plusCircle;
-              color = AppColors.success;
-              break;
-            case 'update':
-            case 'user_updated':
-            case 'ai_settings_updated':
-              icon = LucideIcons.edit3;
-              color = AppColors.primary;
-              break;
-            case 'delete':
-            case 'user_deactivated':
-              icon = LucideIcons.xCircle;
-              color = AppColors.error;
-              break;
-            case 'ai_classified':
-              icon = LucideIcons.sparkles;
-              color = Colors.purple;
-              break;
-            default:
-              icon = LucideIcons.activity;
-              color = Colors.blueGrey;
-          }
-
-          return Card(
-            elevation: 1,
-            margin: const EdgeInsets.only(bottom: 12),
-            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ExpansionTile(
-              leading: CircleAvatar(
-                backgroundColor: color.withOpacity(0.1),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              title: Text(
-                '$action no $entity',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              subtitle: Text(
-                'Por: $userName • $timestamp',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ID da Entidade: $entityId',
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Valor Antigo:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _prettyJson(log['old_value']),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Novo Valor:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _prettyJson(log['new_value']),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
 }
