@@ -6,9 +6,12 @@ import 'package:vistor_ai_mobile/features/auth/data/auth_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/shared/models/user.dart';
+import 'package:vistor_ai_mobile/core/di/service_locator.dart';
+import 'package:vistor_ai_mobile/core/services/notification_service.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 class MockTokenStorage extends Mock implements TokenStorage {}
+class MockNotificationService extends Mock implements NotificationService {}
 
 void main() {
   late AuthRepository authRepository;
@@ -22,9 +25,25 @@ void main() {
     role: UserRole.inspector,
   );
 
+  setUpAll(() {
+    registerFallbackValue(tUser);
+  });
+
   setUp(() {
     authRepository = MockAuthRepository();
     tokenStorage = MockTokenStorage();
+
+    final notificationService = MockNotificationService();
+    when(() => notificationService.getToken()).thenAnswer((_) async => 'fake-token');
+
+    if (getIt.isRegistered<NotificationService>()) {
+      getIt.unregister<NotificationService>();
+    }
+    getIt.registerSingleton<NotificationService>(notificationService);
+
+    when(() => authRepository.updateFcmToken(any())).thenAnswer((_) async => {});
+    when(() => tokenStorage.saveUser(any())).thenAnswer((_) async => {});
+
     authCubit = AuthCubit(
       authRepository: authRepository,
       tokenStorage: tokenStorage,
