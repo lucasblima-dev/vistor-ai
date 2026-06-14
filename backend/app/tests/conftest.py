@@ -54,7 +54,7 @@ from app.schemas.user import UserCreate
 
 # Configuração do banco de teste
 TEST_DB_NAME = "vistor_ai_test"
-# Se estiver rodando fora do Docker, 'db' não será resolvido. Trocamos para localhost se necessário.
+# Se estiver rodando fora do Docker, 'db' não será resolvido. Trocar para localhost se necessário.
 db_url = settings.DATABASE_URL
 import os
 if not os.path.exists('/.dockerenv') and "db:5432" in db_url:
@@ -189,3 +189,24 @@ async def manager_token(client: AsyncClient, db_session: AsyncSession):
         "password": "password123"
     })
     return response.json()["access_token"]
+
+@pytest_asyncio.fixture
+async def admin_token(client: AsyncClient, db_session: AsyncSession):
+    payload = UserCreate(
+        name="Admin User",
+        email="admin_test@vistor.ai",
+        password="password123",
+        role=UserRole.admin
+    )
+    await create_user(db_session, payload)
+    response = await client.post("/api/auth/login", json={
+        "email": "admin_test@vistor.ai",
+        "password": "password123"
+    })
+    return response.json()["access_token"]
+
+@pytest_asyncio.fixture
+async def admin_client(client: AsyncClient, admin_token: str) -> AsyncClient:
+    client.headers.update({"Authorization": f"Bearer {admin_token}"})
+    return client
+

@@ -4,7 +4,7 @@ from app.models.user import User
 from app.models.audit_log import AuditLog
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 @pytest.mark.asyncio
 async def test_list_audit_logs_unauthorized(client: AsyncClient):
@@ -12,10 +12,15 @@ async def test_list_audit_logs_unauthorized(client: AsyncClient):
     assert response.status_code == 401
 
 @pytest.mark.asyncio
-async def test_list_audit_logs_success(authed_client: AsyncClient, db_session: AsyncSession, test_user: User):
+async def test_list_audit_logs_forbidden_for_inspector(authed_client: AsyncClient):
+    response = await authed_client.get("/api/audit-logs/")
+    assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_list_audit_logs_success(admin_client: AsyncClient, db_session: AsyncSession, test_user: User):
     # Cria alguns logs de auditoria fictícios no banco
     entity_id = uuid.uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     log1 = AuditLog(
         user_id=test_user.id,
         entity="inspection",
@@ -36,8 +41,7 @@ async def test_list_audit_logs_success(authed_client: AsyncClient, db_session: A
     db_session.add(log2)
     await db_session.commit()
 
-    # Faz o GET no endpoint
-    response = await authed_client.get(
+    response = await admin_client.get(
         "/api/audit-logs/",
         params={
             "entity": "inspection",
@@ -55,3 +59,4 @@ async def test_list_audit_logs_success(authed_client: AsyncClient, db_session: A
     
     assert data[1]["action"] == "create"
     assert data[1]["user_name"] == test_user.name
+
