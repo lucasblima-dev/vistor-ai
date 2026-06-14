@@ -1167,3 +1167,39 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 
 ---
 
+## Task 33
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes Finais, Logo e Nome do Aplicativo
+**Sessão:** Configuração da Identidade Visual do Launcher (Android/Web) e Nome Comercial do App
+
+### O que foi feito
+
+- **Mobile (Logo SVG e PNG oficial):**
+  - Desenvolvida a logo oficial da aplicação em vetor SVG (`assets/images/app_logo.svg`) contendo o gradiente premium de fundo, o ícone de localização `map-pin` e os brilhos `sparkles` em dourado, replicando fielmente o widget `AppLogo` de login.
+  - Convertido o SVG para uma imagem de alta resolução em PNG (`1024x1024` pixels) em `assets/images/app_logo.png` para uso como origem dos launchers.
+- **Mobile (Geração de Ícones Launcher):**
+  - Adicionado e configurado o pacote `flutter_launcher_icons` no `pubspec.yaml` sob `dev_dependencies` e criado o arquivo de configuração de build `flutter_launcher_icons.yaml`.
+  - Executado o gerador de ícones para as plataformas Android e Web (gerando automaticamente todos os mipmaps adaptativos e ícones da web), mantendo o iOS desligado devido à estrutura de pastas do repositório.
+- **Mobile (Nome Oficial do Aplicativo - Vistor AI):**
+  - Renomeado o label do aplicativo para "Vistor AI" no manifesto do Android (`android/app/src/main/AndroidManifest.xml`).
+  - Atualizado o título da aplicação, tag meta e descrição no arquivo web `index.html` e também no manifesto do PWA `manifest.json`, unificando a identidade visual sob a marca comercial.
+
+### Estado dos arquivos tocados
+
+- `mobile/assets/images/app_logo.svg` — criado.
+- `mobile/assets/images/app_logo.png` — criado.
+- `mobile/pubspec.yaml` — atualizado.
+- `mobile/flutter_launcher_icons.yaml` — criado.
+- `mobile/android/app/src/main/AndroidManifest.xml` — atualizado.
+- `mobile/web/index.html` — atualizado.
+- `mobile/web/manifest.json` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- Execução do build do launcher — Geração de assets de launcher finalizada com sucesso.
+
+---
+

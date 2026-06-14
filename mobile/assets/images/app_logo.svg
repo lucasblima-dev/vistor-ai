@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="premium-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Container with rounded corners (AppRadius.logo = 20 on a size of 80 is 25%, so 128 on 512) -->
+  <rect width="512" height="512" rx="128" ry="128" fill="url(#premium-gradient)" />
+  
+  <!-- Lucide map-pin icon scaled and centered -->
+  <!-- Size = 512 * 0.45 = 230.4. Scale factor = 230.4 / 24 = 9.6. Translate to center: (512 - 230.4)/2 = 140.8 -->
+  <g transform="translate(140.8, 140.8) scale(9.6)" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </g>
+  
+  <!-- Lucide sparkles icon scaled and positioned -->
+  <!-- Size = 512 * 0.24 = 122.88. Scale factor = 122.88 / 24 = 5.12. -->
+  <!-- Position: top = 512 * 0.10 = 51.2, right = 51.2. Left = 512 - 51.2 - 122.88 = 337.92 -->
+  <g transform="translate(337.92, 51.2) scale(5.12)" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+    <path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5z"/>
+    <path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/>
+  </g>
+</svg>
