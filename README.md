@@ -87,13 +87,14 @@ O ecossistema completo de suporte do Vistor AI (API FastAPI, Banco de Dados Post
    docker compose exec api alembic upgrade head
    ```
 
-4. **Popular o banco com o usuário de teste padrão (Seed):**
-   ```bash
-   docker compose exec api python seed_user.py
-   ```
-   * Credenciais geradas para testes:
-     * **E-mail:** `test@example.com`
-     * **Senha:** `password123`
+ 4. **Administrador Inicial (Bootstrap):**
+    O backend tenta criar o usuário administrador automaticamente na inicialização. Em bancos novos/zerados, as tabelas não existem na primeira subida, portanto, **após executar as migrações (Passo 3)**, reinicie o container da API para efetivar a criação do admin padrão:
+    ```bash
+    docker compose restart api
+    ```
+    * Credenciais padrão de desenvolvimento (lidas do `.env` do backend):
+      * **E-mail:** `admin@vistor.ai`
+      * **Senha:** `password123`
 
 Após a conclusão destes passos, a API estará acessível em `http://localhost:8000` e a documentação interativa Swagger estará disponível em `http://localhost:8000/docs`.
 

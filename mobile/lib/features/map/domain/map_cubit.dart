@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:vistor_ai_mobile/core/services/gps_service.dart';
 import 'package:vistor_ai_mobile/features/map/data/heatmap_point.dart';
 import 'package:vistor_ai_mobile/features/map/data/map_repository.dart';
@@ -31,9 +32,22 @@ class MapCubit extends Cubit<MapState> {
       double targetLon;
 
       if (lat == null || lon == null) {
-        final position = await _gpsService.getCurrentPosition();
-        targetLat = position.latitude;
-        targetLon = position.longitude;
+        try {
+          // Prioritize last known position for instant loading
+          final lastKnown = await Geolocator.getLastKnownPosition();
+          if (lastKnown != null) {
+            targetLat = lastKnown.latitude;
+            targetLon = lastKnown.longitude;
+          } else {
+            // Short timeout to prevent locking up the app on poor GPS signal
+            final position = await _gpsService.getCurrentPosition().timeout(const Duration(seconds: 4));
+            targetLat = position.latitude;
+            targetLon = position.longitude;
+          }
+        } catch (_) {
+          targetLat = -5.79448;
+          targetLon = -35.2110;
+        }
       } else {
         targetLat = lat;
         targetLon = lon;
@@ -59,7 +73,13 @@ class MapCubit extends Cubit<MapState> {
         radius: currentRadius,
       )));
     } catch (e) {
-      emit(MapState.error(e.toString()));
+      // Fallback: keep screen functional with empty list instead of showing error screen
+      emit(MapState.loaded(MapData(
+        inspections: const [],
+        heatmapPoints: const [],
+        activeLayer: MapActiveLayer.markers,
+        radius: currentRadius,
+      )));
     }
   }
 

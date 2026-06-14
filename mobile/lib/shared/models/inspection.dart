@@ -62,6 +62,7 @@ abstract class Inspection with _$Inspection {
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     User? inspector,
+    User? assigned,
     @Default([]) List<Media> media,
   }) = _Inspection;
 

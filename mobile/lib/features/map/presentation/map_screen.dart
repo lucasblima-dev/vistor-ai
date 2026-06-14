@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
@@ -31,6 +32,16 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     context.read<MapCubit>().loadMap();
+    _centerOnUser();
+  }
+
+  Future<void> _centerOnUser() async {
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      if (position != null && mounted) {
+        _mapController.move(LatLng(position.latitude, position.longitude), 13);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -60,10 +71,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMapStack(BuildContext context, MapData data) {
-    // Definimos o centro inicial do mapa com base na primeira inspeção ou zero
+    // Definimos o centro inicial do mapa com base na primeira inspeção ou Natal de fallback
     final center = data.inspections.isNotEmpty 
         ? LatLng(data.inspections.first.lat, data.inspections.first.lon)
-        : const LatLng(0, 0);
+        : const LatLng(-5.79448, -35.2110);
 
     final markers = data.inspections.map((insp) {
       return Marker(

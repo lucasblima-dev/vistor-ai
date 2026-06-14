@@ -26,14 +26,18 @@ void main() {
       final json = {
         'id': '101',
         'inspector_id': '1',
+        'title': 'Rachadura estrutural',
         'category': 'civil',
-        'lat': -23.5505,
-        'lon': -46.6333,
+        'location': {
+          'lat': -23.5505,
+          'lon': -46.6333,
+        },
         'status': 'open',
         'created_at': '2026-06-02T10:00:00Z',
       };
       final inspection = Inspection.fromJson(json);
       expect(inspection.id, '101');
+      expect(inspection.title, 'Rachadura estrutural');
       expect(inspection.status, InspectionStatus.open);
     });
   });

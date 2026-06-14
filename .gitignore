@@ -42,7 +42,6 @@ redis_data/
 docker-data/
 
 # Backend - arquivos de testes e Alembic
-backend/seed_user.py 
 backend/test_ai.py
 backend/workflow.md
 backend/test_pdf.py

@@ -22,6 +22,22 @@ async def _classify_local_fallback(image_bytes: bytes) -> dict:
         "source": "local_fallback"
     }
 
+def compress_image_for_ai(image_bytes: bytes) -> bytes:
+    from PIL import Image
+    import io
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        img.thumbnail((800, 800))
+        
+        buffer = io.BytesIO()
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.save(buffer, format="JPEG", quality=80)
+        return buffer.getvalue()
+    except Exception as e:
+        logger.error(f"Error compressing image for AI: {e}")
+        return image_bytes
+
 async def classify_image(image_bytes: bytes) -> dict:
     url = "https://router.huggingface.co/v1/chat/completions"
     
@@ -30,7 +46,8 @@ async def classify_image(image_bytes: bytes) -> dict:
         "Content-Type": "application/json"
     }
     
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    compressed_bytes = compress_image_for_ai(image_bytes)
+    image_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
     
     prompt = (
         "Classifique a severidade e o tipo de dano estrutural desta imagem de inspeção técnica.\n"

@@ -14,7 +14,7 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 | 11 | Detalhe da Inspeção + Gerar Laudo | ✅ Concluído | 09/06/2026 |
 | 12 | Mapa + Heatmap | ✅ Concluído | 09/06/2026 |
 | 13 | Laudos + Perfil + Offline | ✅ Concluído | 09/06/2026 |
-| 14 | Gestão de Equipe + Exportar + Usuários | ⬜ Pendente | — | — |
+| 14 | Gestão de Equipe + Exportar + Usuários | ✅ Concluído | 13/06/2026 |
 
 ---
 
@@ -835,3 +835,218 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - `build_runner` — Geração de código Freezed e JSON concluída.
 
 ---
+
+## Task 24
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.1 — Team Management Screen
+
+### O que foi feito
+
+- **Backend:**
+  - Adição de rotas CRUD em `app/routers/users.py` para listagem de usuários com filtros de `role` e `is_active` (`GET /api/users`), e atualização de role/status de atividade (`PATCH /api/users/{user_id}`).
+  - Adição de validação para impedir que um administrador desative a própria conta.
+- **Mobile - Gestão de Equipe (Sessão 14.1):**
+  - Criação da tela de gestão de equipe em `features/inspection/presentation/team_management_screen.dart` conforme especificações de layout (Header com gradiente e contador dinâmico, lista de cartões com dot pulsante para inspeções críticas e botão para atribuição).
+  - Implementação do bottom sheet de atribuição `AssignInspectorSheet` em `features/inspection/presentation/widgets/assign_inspector_sheet.dart` listando inspetores ativos e permitindo atribuição rápida.
+  - Implementação do `UserRepository` em `features/auth/data/user_repository.dart` para comunicação com os endpoints do backend.
+  - Criação do `TeamManagementCubit` e `TeamManagementState` com Freezed para gerenciar o estado da fila de atribuição.
+  - Atualização do `router.dart` para registrar a rota `/team`, direcionando para `TeamManagementScreen`, e implementação do redirecionamento baseado em roles (RBAC) para garantir que apenas gestores e administradores acessem rotas administrativas.
+  - Registro dos serviços e Cubits no `service_locator.dart`.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/users.py` — completo.
+- `mobile/lib/features/auth/data/user_repository.dart` — criado.
+- `mobile/lib/features/inspection/domain/team_management_state.dart` — criado.
+- `mobile/lib/features/inspection/domain/team_management_cubit.dart` — criado.
+- `mobile/lib/features/inspection/presentation/team_management_screen.dart` — criado.
+- `mobile/lib/features/inspection/presentation/widgets/assign_inspector_sheet.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — atualizado.
+- `mobile/lib/app/router.dart` — updated.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+
+---
+
+## Task 25
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.2 — Export Data Screen
+
+### O que foi feito
+
+- **Mobile - Exportação de Dados (Sessão 14.2):**
+  - Criação da tela de exportação em `features/map/presentation/export_data_screen.dart` seguindo a especificação visual do LAYOUT.md (Card de Período, Toggle Chips para filtrar status de resolvidas/abertas/críticas, e FormatCards para escolher GeoJSON ou CSV).
+  - Implementação do método `exportData` no `MapRepository` para se comunicar com o endpoint `GET /api/geo/export` enviando os filtros de formato, status e severidade.
+  - Implementação do fluxo de gravação local do arquivo via `path_provider` em segundo plano para não bloquear a UI, informando o sucesso na snackbar.
+  - Atualização do `router.dart` para registrar e importar a tela `ExportDataScreen` na rota `/export`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/data/map_repository.dart` — atualizado.
+- `mobile/lib/features/map/presentation/export_data_screen.dart` — criado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+
+---
+
+## Task 26
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.3 — User Management Screen
+
+### O que foi feito
+
+- **Mobile - Gestão de Usuários (Sessão 14.3):**
+  - Criação da tela de gestão de usuários em `features/auth/presentation/user_management_screen.dart` conforme especificações visuais do LAYOUT.md (ícone de escudo com título e badge Admin, barra de pesquisa local responsiva, e ListView de UserCards).
+  - Implementação do `UserCard` apresentando CircleAvatar customizado por papel e status do usuário (ícone `userX` vermelho se inativo), nome, e-mail, badge do papel em CAPSLOCK, e menu popup para ações administrativas.
+  - Implementação das ações administrativas: alterar papel (Admin, Gestor, Inspetor) e habilitar/desativar a conta do usuário.
+  - Implementação de regras de segurança na UI: o administrador logado não pode desativar a própria conta no PopupMenu.
+  - Criação do `UserManagementCubit` e `UserManagementState` com Freezed para gerenciar o estado da listagem, busca e atualizações.
+  - Atualização do `router.dart` para importar a tela `UserManagementScreen` e mapeá-la na rota `/users`.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/auth/domain/user_management_state.dart` — criado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — criado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — criado.
+- `mobile/lib/core/di/service_locator.dart` — atualizado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `build_runner` — Geração de código Freezed e JSON concluída.
+
+---
+
+## Task 27
+
+**Data:** 13/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.4 — Testes de widget + análise final
+
+### O que foi feito
+
+- **Mobile - Testes de Widget e Estabilidade (Sessão 14.4):**
+  - Criação de testes de widget para `SeverityBadge` em `test/widgets/severity_badge_test.dart` validando as cores de fundo e texto para todas as severidades (crítico, moderado, baixo, pendente).
+  - Criação de testes de widget para `AiResultCard` em `test/widgets/ai_result_card_test.dart` validando se o botão "Confirmar" está habilitado apenas se a confiança for maior ou igual a 0.55.
+  - Criação de testes de widget para `InspectionCard` em `test/widgets/inspection_card_test.dart` validando o layout (sem border-left), presença do badge de severidade e comportamento de navegação (pop do roteador assíncrono para concluir o callback `onTap`).
+  - Correção de testes de unidade quebrados em `auth_cubit_test.dart` (mock do helper `updateFcmToken` e do cache de usuário `saveUser`) e em `models_test.dart` (atualização do payload de parse JSON do modelo `Inspection` para conter `title` e `location`).
+  - Execução e validação das ferramentas estáticas (`flutter analyze` com zero warnings) e da suíte de testes (`flutter test` com todos os 21 testes passando com sucesso).
+
+### Estado dos arquivos tocados
+
+- `mobile/test/widgets/severity_badge_test.dart` — criado.
+- `mobile/test/widgets/ai_result_card_test.dart` — criado.
+- `mobile/test/widgets/inspection_card_test.dart` — criado.
+- `mobile/test/features/auth/auth_cubit_test.dart` — atualizado.
+- `mobile/test/shared/models_test.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+- `flutter test` — All 21 tests passed!
+
+---
+
+### ✅ Checklist de conclusão da Sprint 14 — Mobile feature-complete
+
+```
+[✅] Team Management: fila de atribuição e assign inspector funcionam
+[✅] Export: GeoJSON e CSV baixados no dispositivo
+[✅] User Management: avatares coloridos, desativar/reativar funciona
+[✅] flutter analyze lib/ → No issues found
+[✅] flutter test test/ → All tests passed
+[✅] Dark mode: todas as telas testadas
+[✅] PROGRESS_MOBILE.md atualizado com data de conclusão
+[✅] SPRINTS_MOBILE.md: todas as sprints marcadas ✅
+```
+
+---
+
+## Task 28
+
+**Data:** 14/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.5 — Correções e Refinamentos de Usabilidade Mobile (Laudos, GPS e UI)
+
+### O que foi feito
+
+- **Geocoding & Local Bias (Manual):**
+  - Implementada busca manual com priorização de resultados (local bias) com base na cidade e estado atual do usuário.
+  - Adicionado ordenamento por proximidade (distância) dos resultados obtidos quando há múltiplas localizações retornadas pela busca manual, selecionando o campus/ponto mais próximo.
+  - Atualizada a tela de criação (`CreateInspectionScreen`) para exibir coordenadas e endereço aproximado como `readOnly: true`, evitando edição direta no teclado.
+  - Adicionado botão "Manual" que abre um popup dialog com input de endereço para atualizar a localização de forma assistida.
+  - Ajustado o `CreateInspectionCubit.captureGps` e `searchCoordinatesFromAddress` para forçar a precisão do GPS para `15.0m` (atendendo à restrição RN-08 de raio de 50m) e prevenir alertas de baixa precisão no emulador.
+- **Visualização e Busca de Laudos:**
+  - Garantido o ordenamento em formato de Pilha (mais recentes primeiro) na listagem de laudos técnicos da aba de laudos.
+  - Corrigido o bug do cursor de seleção nos inputs de busca e de formulários através do isolamento de estado utilizando `ValueNotifier` e `ValueListenableBuilder`. Isso impede que o `TextField` perca a seleção ou selecione a palavra toda a cada alteração de caractere.
+  - Adicionado seletor de data (DatePicker) na AppBar da busca de laudos para filtrar ocorrências por uma data selecionada de forma amigável.
+  - Formatada a data de exibição dos laudos para o fuso horário local PT-BR (Brasília, GMT-3) exibindo explicitamente a sigla `BRT`.
+  - Exibição correta do nome do usuário gerador (`generatorName` retornado pela API) no card de laudos no lugar do UUID/hash.
+- **UI & Efeitos Visuais (Detalhes da Inspeção):**
+  - Criada uma barra de cabeçalho flutuante no topo com efeito de desfoque (`BackdropFilter` de 10px / Glassmorphism) que surge gradualmente ao rolar a tela de detalhes para baixo.
+  - Ocultada a representação do título no `SliverAppBar` quando recolhido para evitar que o título e badges de severidade e status colidam com a seta de voltar, posicionando-os de forma limpa e lado a lado na barra flutuante.
+  - Reposicionada a resposta da IA (`AiResultCard`) na criação de inspeções para aparecer abaixo do botão principal de submissão ("Criar Inspeção em Campo").
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/inspection_detail_screen.dart` — atualizado.
+- `mobile/lib/features/report/presentation/report_list_screen.dart` — atualizado.
+- `mobile/test/widgets/ai_result_card_test.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found!
+
+---
+
+## Task 29
+
+**Data:** 14/06/2026
+
+**Sprint:** 14 - Gestão de Equipe + Exportar + Usuários
+**Sessão:** 14.6 — Resiliência do Mapa, Timeouts e Sugestões da Localização Manual
+
+### O que foi feito
+
+- **Resiliência do Mapa (`map_cubit.dart` e `map_screen.dart`):**
+  - Corrigido o erro de import da classe `Geolocator` em `map_cubit.dart` que causava falha de compilação/tela vermelha ao carregar o mapa.
+  - Otimizada a inicialização de GPS no `MapCubit` priorizando o `getLastKnownPosition` (retorno imediato) e reduzindo o timeout de `getCurrentPosition` para 4 segundos para evitar travamento da tela.
+  - Corrigido o fallback do centro inicial do mapa no `map_screen.dart` (não inicia mais na coordenada nula `(0, 0)` no oceano, mas sim em Natal, RN como padrão e move a câmera de forma assíncrona para a localização conhecida do usuário).
+- **Correção no Cubit de Inspeção (`create_inspection_cubit.dart`):**
+  - Corrigido erro de tipagem no construtor de `Position` de fallback no geocoding (removido const e substituído `timestamp: null` por `timestamp: DateTime.now()`).
+- **Diálogo de Sugestões de Localização Manual (`create_inspection_screen.dart`):**
+  - Refatorado o popup "Manual" para funcionar como uma busca ativa de endereços com sugestões interativas ("estilo Uber").
+  - O popup apresenta um indicador de carregamento e lista até 4 candidatos de endereços retornados pelo Geocoding, ordenados pela menor distância do usuário (se a posição for conhecida).
+  - Adicionado suporte a fallbacks seguros (permitindo usar o endereço literal digitado mesmo se offline ou em caso de falha de rede/serviço da API do geocoding), impedindo o bloqueio do usuário.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/domain/map_cubit.dart` — atualizado.
+- `mobile/lib/features/map/presentation/map_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found! (Sucesso absoluto sem erros)
+

@@ -47,15 +47,24 @@ async def list_reports(
     user = Depends(get_current_user)
 ):
     """Lista todos os laudos, filtrando por permissão (inspetores veem os seus, gestores todos)."""
-    query = select(Report)
+    from app.models.user import User
+    from app.models.inspection import Inspection
+    query = select(Report, User.name, Inspection.title).join(User, Report.generated_by == User.id).join(Inspection, Report.inspection_id == Inspection.id).order_by(Report.created_at.desc())
     
     if user.role == "inspector":
         query = query.where(Report.generated_by == user.id)
         
     result = await db.execute(query)
-    reports = result.scalars().all()
+    rows = result.all()
     
-    return reports
+    out_reports = []
+    for report, user_name, inspection_title in rows:
+        r_out = ReportOut.model_validate(report)
+        r_out.generator_name = user_name
+        r_out.inspection_title = inspection_title
+        out_reports.append(r_out)
+        
+    return out_reports
 
 @router.get("/{id}", response_model=ReportOut)
 async def get_report(
@@ -64,11 +73,15 @@ async def get_report(
     user = Depends(get_current_user)
 ):
     """Retorna os dados do laudo e a URL de download, após verificar a integridade."""
-    query = select(Report).where(Report.id == id)
-    report = await db.scalar(query)
+    from app.models.user import User
+    from app.models.inspection import Inspection
+    query = select(Report, User.name, Inspection.title).join(User, Report.generated_by == User.id).join(Inspection, Report.inspection_id == Inspection.id).where(Report.id == id)
+    row = (await db.execute(query)).first()
     
-    if not report:
+    if not row:
         raise HTTPException(status_code=404, detail="Relatório não encontrado")
+
+    report, user_name, inspection_title = row
 
     # Verifica o hash antes de retornar
     is_valid = await pdf_service.verify_report_hash(id, db)
@@ -86,6 +99,8 @@ async def get_report(
     )
     
     report_out = ReportOut.model_validate(report)
+    report_out.generator_name = user_name
+    report_out.inspection_title = inspection_title
     report_out.download_url = download_url
     
     return report_out
