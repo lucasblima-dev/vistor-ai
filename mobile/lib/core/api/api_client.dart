@@ -103,13 +103,52 @@ class ApiClient {
 
 extension DioExceptionExtension on DioException {
   String getErrorMessage([String defaultMessage = 'Erro inesperado no servidor']) {
+    // 1. Se o status da resposta for 500 ou maior, trata-se de um erro crítico interno do servidor.
+    // O detalhe desses erros normalmente expõe detalhes técnicos que o usuário comum não deve ver.
+    if (response?.statusCode != null && response!.statusCode! >= 500) {
+      return 'Ocorreu um erro interno no servidor. Tente novamente mais tarde.';
+    }
+
     final data = response?.data;
+    String? rawMsg;
+
     if (data is Map && data['detail'] != null) {
-      return data['detail'].toString();
+      rawMsg = data['detail'].toString();
+    } else if (data is String && data.isNotEmpty) {
+      rawMsg = data;
     }
-    if (data is String && data.isNotEmpty) {
-      return data;
+
+    if (rawMsg != null) {
+      final lower = rawMsg.toLowerCase();
+      // Varredura por termos técnicos locais/servidores que o usuário não precisa ver
+      final technicalTerms = [
+        'exception', 'error', 'database', 'minio', 's3', 'sqlalchemy', 'postgres', 
+        'redis', 'typeerror', 'attributeerror', 'keyerror', 'nullpointer', 'traceback',
+        'internal server', 'fail', 'crash', 'connection', 'timeout', 'driver', 'query',
+        'sql', 'pyproject', 'fastapi', 'onnx', 'huggingface', 'model_id', 'threshold',
+        'assertion', 'syntax', 'indexerror', 'valueerror', 'socket', 'http', 'network',
+        'bucket', 'object', 'aws', 'client', 'refused'
+      ];
+      
+      bool containsTech = technicalTerms.any((term) => lower.contains(term));
+      if (containsTech) {
+        return defaultMessage;
+      }
+      
+      return rawMsg;
     }
+    
+    // 2. Erros de conexão locais do próprio Dio
+    if (type == DioExceptionType.connectionTimeout || 
+        type == DioExceptionType.receiveTimeout || 
+        type == DioExceptionType.sendTimeout) {
+      return 'Tempo limite de conexão esgotado. Verifique sua internet.';
+    }
+    if (type == DioExceptionType.connectionError) {
+      return 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+    }
+
     return defaultMessage;
   }
 }
+

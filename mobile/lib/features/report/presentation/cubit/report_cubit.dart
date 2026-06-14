@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/report/domain/repositories/report_repository.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_state.dart';
 import 'package:vistor_ai_mobile/shared/models/report.dart';
@@ -192,13 +193,6 @@ class ReportCubit extends Cubit<ReportState> {
   }
 
   String _formatError(dynamic e) {
-    if (e is DioException) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        return 'Timeout de conexão com o servidor.';
-      }
-      return 'Erro na comunicação com o servidor: ${e.message}';
-    }
-    return e.toString().replaceAll('Exception: ', '');
+    return ErrorHandler.handle(e, 'Erro ao processar operação do laudo técnico.');
   }
 }

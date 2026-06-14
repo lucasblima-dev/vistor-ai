@@ -1351,6 +1351,14 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 - **Mobile (Nome Oficial do Aplicativo - Vistor AI):**
   - Renomeado o label do aplicativo para "Vistor AI" no manifesto do Android (`android/app/src/main/AndroidManifest.xml`).
   - Atualizado o título da aplicação, tag meta e descrição no arquivo web `index.html` e também no manifesto do PWA `manifest.json`, unificando a identidade visual sob a marca comercial.
+- **Mobile (Reatividade dos Switches de Preferência):**
+  - Declaradas as variáveis de estado locais em `_ProfileScreenState` para representar as preferências do usuário, vinculando-as aos switches da `ProfileScreen` e permitindo que sejam ligados/desligados de forma reativa.
+- **Mobile (Melhoria na Inicialização do Mapa):**
+  - Refatorada a inicialização do mapa em `MapScreen` para obter ativamente a localização real em tempo real do GPS. A câmera se desloca automaticamente para a posição real do usuário e a busca no cubit é disparada na coordenada exata, exibindo as inspeções locais de imediato.
+- **Mobile (Tratamento e Sanitização de Erros Técnicos):**
+  - Criada a classe utilitária centralizada `ErrorHandler` (`lib/core/utils/error_handler.dart`) para higienizar exceções locais, erros de tipagem/runtime do Dart (ex: `TypeError`, `FormatException`) e erros do servidor (como problemas de MinIO, S3 ou banco de dados) antes de serem exibidos na interface para o usuário final.
+  - Aprimorada a extensão `DioExceptionExtension` no `api_client.dart` para interceptar respostas 500+ e mensagens que contenham palavras-chave técnicas de infraestrutura, mascarando-as de forma automática e amigável.
+  - Refatorados todos os Cubits (`UserManagementCubit`, `AdminSettingsCubit`, `CreateInspectionCubit`, `InspectionCubit`, `InspectionDetailCubit`, `TeamManagementCubit` e `ReportCubit`) para utilizarem a rotina do `ErrorHandler` no mapeamento de estados de erro.
 
 ### Estado dos arquivos tocados
 
@@ -1361,12 +1369,22 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 - `mobile/android/app/src/main/AndroidManifest.xml` — atualizado.
 - `mobile/web/index.html` — atualizado.
 - `mobile/web/manifest.json` — atualizado.
+- `mobile/lib/core/utils/error_handler.dart` — criado.
+- `mobile/lib/core/api/api_client.dart` — atualizado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/inspection_detail_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/team_management_cubit.dart` — atualizado.
+- `mobile/lib/features/report/presentation/cubit/report_cubit.dart` — atualizado.
 
 ### Validações que passaram
 
-- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- `flutter analyze` — Sucesso absoluto sem erros estáticos importantes.
 - Execução do build do launcher — Geração de assets de launcher finalizada com sucesso.
 
 ---
+
 
 

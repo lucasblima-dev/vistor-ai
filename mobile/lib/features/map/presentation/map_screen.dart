@@ -37,9 +37,19 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _centerOnUser() async {
     try {
-      final position = await Geolocator.getLastKnownPosition();
-      if (position != null && mounted) {
+      Position? position = await Geolocator.getLastKnownPosition();
+      position ??= await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 4),
+      );
+      
+      if (mounted) {
         _mapController.move(LatLng(position.latitude, position.longitude), 13);
+        // Atualiza a busca no cubit para a localização real identificada
+        context.read<MapCubit>().loadMap(
+          lat: position.latitude,
+          lon: position.longitude,
+        );
       }
     } catch (_) {}
   }

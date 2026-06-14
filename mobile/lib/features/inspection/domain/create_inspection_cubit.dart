@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/core/services/gps_service.dart';
 import 'package:vistor_ai_mobile/core/services/media_service.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
@@ -154,7 +154,7 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
         isLoadingGps: false,
       ));
     } catch (e) {
-      emit(state.copyWith(error: e.toString(), isLoadingGps: false));
+      emit(state.copyWith(error: ErrorHandler.handle(e, 'Não foi possível obter a localização do GPS.'), isLoadingGps: false));
     }
   }
 
@@ -389,17 +389,7 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
         ));
       }
     } catch (e) {
-      String message = e.toString();
-      if (e is DioException) {
-        final data = e.response?.data;
-        if (data is Map && data.containsKey('detail')) {
-          message = data['detail'];
-        } else if (e.type == DioExceptionType.connectionError) {
-          message = 'Erro de conexão. Verifique o backend e o adb reverse.';
-        } else {
-          message = 'Erro no servidor: ${e.response?.statusCode}';
-        }
-      }
+      final message = ErrorHandler.handle(e, 'Ocorreu um erro ao enviar a inspeção. Tente novamente.');
       emit(state.copyWith(error: message, isSubmitting: false, isUploadingMedia: false));
     }
   }
@@ -409,7 +399,7 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
       await _repository.update(id, const InspectionUpdate(status: InspectionStatus.open));
       emit(state.copyWith(isCompleted: true));
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(state.copyWith(error: ErrorHandler.handle(e, 'Não foi possível confirmar a classificação.')));
     }
   }
 
@@ -422,7 +412,7 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
       ));
       emit(state.copyWith(isCompleted: true));
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(state.copyWith(error: ErrorHandler.handle(e, 'Não foi possível corrigir a severidade.')));
     }
   }
 }

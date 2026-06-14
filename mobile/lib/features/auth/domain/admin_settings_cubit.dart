@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/auth/data/admin_repository.dart';
 import 'admin_settings_state.dart';
 
@@ -22,7 +23,7 @@ class AdminSettingsCubit extends Cubit<AdminSettingsState> {
         hasMore: logs.length == 5,
       ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, error: e.toString()));
+      emit(state.copyWith(isLoading: false, error: ErrorHandler.handle(e, 'Erro ao carregar configurações de IA.')));
     }
   }
 
@@ -38,7 +39,7 @@ class AdminSettingsCubit extends Cubit<AdminSettingsState> {
         hasMore: nextLogs.length == 5,
       ));
     } catch (e) {
-      emit(state.copyWith(isLoadingMore: false, error: e.toString()));
+      emit(state.copyWith(isLoadingMore: false, error: ErrorHandler.handle(e, 'Erro ao carregar mais logs.')));
     }
   }
 
@@ -62,7 +63,7 @@ class AdminSettingsCubit extends Cubit<AdminSettingsState> {
         successMessage: 'Configurações de IA salvas com sucesso!',
       ));
     } catch (e) {
-      emit(state.copyWith(isSaving: false, error: e.toString()));
+      emit(state.copyWith(isSaving: false, error: ErrorHandler.handle(e, 'Erro ao salvar configurações de IA.')));
     }
   }
 }
