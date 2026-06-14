@@ -22,7 +22,12 @@ class UserOut(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+    avatar_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserChangePassword(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)

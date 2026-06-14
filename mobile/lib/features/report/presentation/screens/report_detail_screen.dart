@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'dart:io';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
 import 'package:vistor_ai_mobile/features/report/presentation/cubit/report_cubit.dart';
@@ -105,32 +106,22 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             downloaded: (filePath) {
               return Stack(
                 children: [
-                  PDFView(
-                    filePath: filePath,
-                    enableSwipe: true,
-                    swipeHorizontal: false,
-                    autoSpacing: true,
-                    pageFling: true,
-                    onRender: (pages) {
+                  SfPdfViewer.file(
+                    File(filePath),
+                    onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
                       setState(() {
-                        _totalPages = pages ?? 0;
+                        _pdfViewError = details.description;
+                      });
+                    },
+                    onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                      setState(() {
+                        _totalPages = details.document.pages.count;
                         _isReady = true;
                       });
                     },
-                    onError: (error) {
+                    onPageChanged: (PdfPageChangedDetails details) {
                       setState(() {
-                        _pdfViewError = error.toString();
-                      });
-                    },
-                    onPageError: (page, error) {
-                      setState(() {
-                        _pdfViewError = error.toString();
-                      });
-                    },
-                    onViewCreated: (PDFViewController pdfViewController) {},
-                    onPageChanged: (int? page, int? total) {
-                      setState(() {
-                        _currentPage = page ?? 0;
+                        _currentPage = details.newPageNumber - 1;
                       });
                     },
                   ),

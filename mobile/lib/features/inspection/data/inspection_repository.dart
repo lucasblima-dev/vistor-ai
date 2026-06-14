@@ -89,8 +89,7 @@ class InspectionRepository {
         throw Exception('Erro ao disparar geração de laudo');
       }
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao disparar geração de laudo';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao disparar geração de laudo'));
     }
   }
 
@@ -181,8 +180,7 @@ class InspectionRepository {
       }
       throw Exception('Erro ao reavaliar com IA');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao reavaliar com IA';
-      throw Exception(message);
+      throw Exception(e.getErrorMessage('Erro ao reavaliar com IA'));
     }
   }
 

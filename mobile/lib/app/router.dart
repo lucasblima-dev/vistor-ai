@@ -11,7 +11,12 @@ import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/profile_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/forgot_password_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/edit_profile_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/change_password_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/user_management_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/admin_settings_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/audit_logs_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
@@ -34,6 +39,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
   static const String home = '/inspections';
   static const String createInspection = '/inspections/create';
   static String inspection(String id) => '/inspections/$id';
@@ -43,12 +49,15 @@ class AppRoutes {
   static String report(String id) => '/reports/$id';
 
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
+  static const String changePassword = '/profile/change-password';
   
   // Gestão
   static const String teamManagement = '/team';
   static const String userManagement = '/users';
   static const String exportData = '/export';
   static const String allReports = '/reports-all';
+  static const String adminSettings = '/admin/settings';
 
   // Utilitário
   static const String offline = '/offline';
@@ -67,8 +76,67 @@ class AppScaffold extends StatelessWidget {
           authenticated: (u) => u,
           orElse: () => null,
         );
-    final isAdmin = user?.role == UserRole.admin;
-    final isManager = user?.role == UserRole.manager;
+    final role = user?.role ?? UserRole.inspector;
+
+    final List<NavigationDestination> destinations;
+    if (role == UserRole.admin) {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.activity),
+          label: 'Logs',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.cpu),
+          label: 'IA',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.users),
+          label: 'Usuários',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    } else if (role == UserRole.manager) {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.list),
+          label: 'Inspeções',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.download),
+          label: 'Exportar',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.users),
+          label: 'Equipe',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    } else {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.list),
+          label: 'Inspeções',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.map),
+          label: 'Mapa',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.fileText),
+          label: 'Laudos',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    }
 
     return Scaffold(
       body: Column(
@@ -80,62 +148,7 @@ class AppScaffold extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(index),
-        destinations: isAdmin
-            ? const [
-                NavigationDestination(
-                  icon: Icon(LucideIcons.users),
-                  label: 'Usuários',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.userCheck),
-                  label: 'Equipe',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.download),
-                  label: 'Exportar',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.user),
-                  label: 'Perfil',
-                ),
-              ]
-            : isManager
-                ? const [
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.list),
-                      label: 'Inspeções',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.map),
-                      label: 'Mapa',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.userCheck),
-                      label: 'Equipe',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.user),
-                      label: 'Perfil',
-                    ),
-                  ]
-                : const [
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.list),
-                      label: 'Inspeções',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.map),
-                      label: 'Mapa',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.fileText),
-                      label: 'Laudos',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.user),
-                      label: 'Perfil',
-                    ),
-                  ],
+        destinations: destinations,
       ),
     );
   }
@@ -166,20 +179,21 @@ GoRouter buildRouter(AuthCubit authCubit) {
       final authState = authCubit.state;
       final bool loggingIn = state.matchedLocation == AppRoutes.login;
       final bool registering = state.matchedLocation == AppRoutes.register;
+      final bool isForgotPassword = state.matchedLocation == AppRoutes.forgotPassword;
       final bool isSplash = state.matchedLocation == AppRoutes.splash;
 
       // 1. Redirecionamento de Auth
       final String? authRedirect = authState.maybeWhen(
         authenticated: (_) {
-          if (loggingIn || registering || isSplash) return AppRoutes.home;
+          if (loggingIn || registering || isSplash || isForgotPassword) return AppRoutes.home;
           return null;
         },
         unauthenticated: () {
-          if (loggingIn || registering) return null;
+          if (loggingIn || registering || isForgotPassword) return null;
           return AppRoutes.login;
         },
         error: (_) {
-           if (loggingIn || registering) return null;
+           if (loggingIn || registering || isForgotPassword) return null;
            return AppRoutes.login;
         },
         orElse: () => null,
@@ -193,13 +207,14 @@ GoRouter buildRouter(AuthCubit authCubit) {
           final isTeamRoute = state.matchedLocation.startsWith(AppRoutes.teamManagement);
           final isExportRoute = state.matchedLocation.startsWith(AppRoutes.exportData);
           final isUserRoute = state.matchedLocation.startsWith(AppRoutes.userManagement);
+          final isAdminSettingsRoute = state.matchedLocation.startsWith(AppRoutes.adminSettings);
 
           if (isTeamRoute || isExportRoute) {
             if (user.role != UserRole.manager && user.role != UserRole.admin) {
               return AppRoutes.home; // Apenas manager ou admin
             }
           }
-          if (isUserRoute) {
+          if (isUserRoute || isAdminSettingsRoute) {
             if (user.role != UserRole.admin) {
               return AppRoutes.home; // Apenas admin
             }
@@ -218,6 +233,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
         AppRoutes.teamManagement,
         AppRoutes.userManagement,
         AppRoutes.exportData,
+        AppRoutes.adminSettings,
       ];
 
       if (networkDependentRoutes.any((route) => state.matchedLocation.startsWith(route))) {
@@ -243,6 +259,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
 
       // Shell para as abas principais
       StatefulShellRoute.indexedStack(
@@ -250,7 +270,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
           return AppScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Aba: Inspeções -> Usuários (Admin)
+          // Aba: Inspeções / Logs
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -261,7 +281,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         orElse: () => null,
                       );
                   if (user?.role == UserRole.admin) {
-                    return const UserManagementScreen();
+                    return const AuditLogsScreen();
                   }
                   return const InspectionListScreen();
                 },
@@ -286,7 +306,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Mapa -> Equipe (Admin)
+          // Aba: Mapa / IA / Exportar
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -297,7 +317,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         orElse: () => null,
                       );
                   if (user?.role == UserRole.admin) {
-                    return const TeamManagementScreen();
+                    return const AdminSettingsScreen();
+                  }
+                  if (user?.role == UserRole.manager) {
+                    return const ExportDataScreen();
                   }
                   return const MapScreen();
                 },
@@ -305,7 +328,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Laudos -> Exportar (Admin) / Equipe (Gestor)
+          // Aba: Laudos / Equipe / Usuários
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -316,7 +339,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         orElse: () => null,
                       );
                   if (user?.role == UserRole.admin) {
-                    return const ExportDataScreen();
+                    return const UserManagementScreen();
                   }
                   if (user?.role == UserRole.manager) {
                     return const TeamManagementScreen();
@@ -355,6 +378,14 @@ GoRouter buildRouter(AuthCubit authCubit) {
                     path: 'archive',
                     builder: (context, state) => const ArchivedInspectionsScreen(),
                   ),
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) => const EditProfileScreen(),
+                  ),
+                  GoRoute(
+                    path: 'change-password',
+                    builder: (context, state) => const ChangePasswordScreen(),
+                  ),
                 ],
               ),
             ],
@@ -378,6 +409,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: AppRoutes.allReports,
         builder: (context, state) => const ReportListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminSettings,
+        builder: (context, state) => const AdminSettingsScreen(),
       ),
 
       // Utilitário

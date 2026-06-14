@@ -1050,3 +1050,120 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 
 - `flutter analyze` — No issues found! (Sucesso absoluto sem erros)
 
+---
+
+## Task 30
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes de Perfil, Senha e Armazenamento Nativo
+**Sessão:** Telas de Perfil, Alteração de Senha, Redefinição e Upload Nativo no Mobile
+
+### O que foi feito
+
+- **Mobile (Telas Dedicadas e Integração):**
+  - Implementada a tela de redefinição de senha (`ForgotPasswordScreen`) com validação de formato de e-mail, carregamento rápido simulado de 1.5s, mensagem de sucesso e botão de retorno.
+  - Integrada a navegação para `/forgot-password` na rota pública do GoRouter e no formulário de login (`LoginForm`).
+  - Desenvolvidas telas dedicadas para edição de perfil (`EditProfileScreen`) e alteração de senha (`ChangePasswordScreen`) substituindo os antigos modais/diálogos.
+  - Atualizado o modelo `User` do Flutter para receber `avatar_url` da API e executada a regeneração do Freezed via `build_runner`.
+  - Implementado envio da foto de perfil para o backend via `AuthRepository.uploadAvatar` e `AuthCubit.uploadAvatar` utilizando requisições multipart, removendo a necessidade do workaround de cache de imagem local em `TokenStorage`.
+  - Formatado o cabeçalho da `ProfileScreen` para exibir o nome e o cargo do usuário em formato compacto `Nome | Cargo` abaixo da foto de perfil e sem distintivos repetidos.
+  - Atualizada a linha de versão do app para abrir um pop-up temático (`AlertDialog`) com detalhes do app em vez de expor o número da versão na própria linha.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/shared/models/user.dart` — atualizado.
+- `mobile/lib/core/api/endpoints.dart` — atualizado.
+- `mobile/lib/core/api/token_storage.dart` — atualizado.
+- `mobile/lib/features/auth/data/auth_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/auth_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/widgets/login_form.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/forgot_password_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/edit_profile_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/change_password_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — atualizado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — Sucesso absoluto sem erros nem avisos de lint.
+- `flutter test` — Todos os 21 testes mobile executados e aprovados.
+
+---
+
+## Task 31
+
+**Data:** 14/06/2026
+
+**Sprint:** Customização de Abas Dinâmicas por Role e Cadastro de Usuários por Admin
+**Sessão:** Ajustes de Roteamento Dinâmico por Role no BottomNavigationBar, Tela Standalone de Auditoria, Configurações de IA e Cadastro Integrado
+
+### O que foi feito
+
+- **Mobile (Roteamento Dinâmico por Role & Configurações de IA):**
+  - Desenvolvida a tela independente `AuditLogsScreen` (`lib/features/auth/presentation/audit_logs_screen.dart`) que consome logs de auditoria via `AdminSettingsCubit` com formatação e conversão resiliente contra erros de tipo de índice em tempo de execução.
+  - Refatorada a tela `AdminSettingsScreen` (`lib/features/auth/presentation/admin_settings_screen.dart`) removendo tabs e TabBarView, tornando-se a tela de configurações de motor de IA direta para os administradores.
+  - Atualizada a classe `AppScaffold` em `lib/app/router.dart` para renderizar o `NavigationBar` contendo destinos e ícones específicos para cada cargo (Admin, Gestor, Inspetor), garantindo sincronismo do índice stack do shell.
+  - Reconfigurado o roteamento dinâmico dentro de cada uma das quatro ramificações (`StatefulShellBranch`) do `StatefulShellRoute` do GoRouter, chaveando o widget inicial dependendo do cargo retornado do `AuthCubit`:
+    - **Inspector (Operador/Inspetor):** Inspeções | Mapa | Laudos | Perfil
+    - **Gestor (Manager):** Inspeções | Exportar (GeoJSON + CSV) | Equipe (TeamManagementScreen) | Perfil
+    - **Admin (Administrador):** Logs (AuditLogsScreen) | IA (AdminSettingsScreen) | Usuários (UserManagementScreen) | Perfil
+- **Mobile (Cadastro de Usuário Integrado):**
+  - Adicionado suporte de requisição POST a `/api/users/` no `UserRepository.create` e no `UserManagementCubit.createUser`.
+  - Inserido um `FloatingActionButton` na tela `UserManagementScreen` que abre um pop-up customizado com formulário de cadastro validando o preenchimento de nome completo, formato de email, tamanho mínimo de senha e seleção do papel (cargo).
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/auth/data/user_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/audit_logs_screen.dart` — criado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- `flutter test` — Todos os 21 testes mobile executados e aprovados.
+
+---
+
+## Task 32
+
+**Data:** 14/06/2026
+
+**Sprint:** Estabilização e Tratamento Resiliente de Erros de Conexão/Deserialização
+**Sessão:** Tratamento Robusto de Respostas do Servidor, Paginação de Logs e Correção de Lints
+
+### O que foi feito
+
+- **Mobile (Logs de Auditoria Paginados de 5 em 5):**
+  - Removido o ícone de engrenagem (configs) do topo da tela `AuditLogsScreen`, deixando-a mais limpa uma vez que existe a aba "IA" no menu inferior.
+  - Atualizado `AdminRepository.getAuditLogs` para receber parâmetros `limit` e `offset`.
+  - Atualizado `AdminSettingsState` e `AdminSettingsCubit` para gerenciar a paginação utilizando `isLoadingMore` e `hasMore`.
+  - Atualizada a tela `AuditLogsScreen` para exibir um botão "Carregar mais 5 logs" no fim da lista (ou um indicador de carregamento caso `isLoadingMore` esteja ativo), evitando sobrecarregar o banco de dados carregando apenas 5 logs por padrão.
+- **Mobile (Prevenção de TypeError em Exceções de API):**
+  - Implementada a extensão `DioExceptionExtension` com o método helper `getErrorMessage()` em `core/api/api_client.dart` para extrair mensagens de erro do backend com segurança. A extensão valida se `response.data` é um `Map` antes de acessar o campo `'detail'`, o que evita o erro de índice `type 'String' is not a subtype of type 'int' of index` quando o backend retorna strings de erro puro.
+  - Refatorados todos os repositórios (`admin_repository.dart`, `auth_repository.dart`, `user_repository.dart`, `inspection_repository.dart`) para usar o helper `e.getErrorMessage(...)` em seus blocos `catch`.
+- **Mobile (Correção de Lints / Avisos de Análise):**
+  - Removido o campo e parâmetro opcional não utilizado `trailing` da classe privada `_SettingsTile` na tela `ProfileScreen` para corrigir um aviso do analisador estático do Dart (`unused_element_parameter`).
+  - Removidos imports não utilizados em `audit_logs_screen.dart` (`router.dart` e `go_router.dart`).
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/core/api/api_client.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/audit_logs_screen.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_state.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/data/admin_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/auth_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/user_repository.dart` — atualizado.
+- `mobile/lib/features/inspection/data/inspection_repository.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — Sucesso absoluto sem erros estáticos ou avisos.
+- `flutter test` — Todos os 21 testes mobile executados e aprovados.
+
+---
+

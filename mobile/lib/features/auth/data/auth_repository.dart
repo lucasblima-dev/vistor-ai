@@ -51,8 +51,7 @@ class AuthRepository {
           e.type == DioExceptionType.connectionError) {
         throw AuthException('Não foi possível conectar ao servidor. Verifique sua conexão e se o backend está rodando.');
       }
-      final message = e.response?.data['detail'] ?? 'Erro inesperado no servidor';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro inesperado no servidor'));
     }
   }
 
@@ -83,8 +82,7 @@ class AuthRepository {
           e.type == DioExceptionType.connectionError) {
         throw AuthException('Não foi possível conectar ao servidor. Verifique sua conexão.');
       }
-      final message = e.response?.data['detail'] ?? 'Erro inesperado ao realizar cadastro';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro inesperado ao realizar cadastro'));
     }
   }
 
@@ -130,8 +128,7 @@ class AuthRepository {
       }
       throw AuthException('Não foi possível obter dados do usuário');
     } on DioException catch (e) {
-      final message = e.response?.data['detail'] ?? 'Erro ao obter dados do usuário';
-      throw AuthException(message);
+      throw AuthException(e.getErrorMessage('Erro ao obter dados do usuário'));
     }
   }
 
@@ -143,6 +140,80 @@ class AuthRepository {
       );
     } catch (_) {
       // Falha silenciosa para não travar o login
+    }
+  }
+
+  Future<User> updateMe({required String name, required String email}) async {
+    try {
+      final response = await _apiClient.dio.patch(
+        AppEndpoints.updateMe,
+        data: {
+          'name': name,
+          'email': email,
+        },
+      );
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data);
+      }
+      final data = response.data;
+      final message = (data is Map && data['detail'] != null)
+          ? data['detail'].toString()
+          : 'Erro ao atualizar dados do perfil';
+      throw AuthException(message);
+    } on DioException catch (e) {
+      throw AuthException(e.getErrorMessage('Erro ao atualizar dados do perfil'));
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        AppEndpoints.changePassword,
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        final data = response.data;
+        final message = (data is Map && data['detail'] != null)
+            ? data['detail'].toString()
+            : 'Erro ao alterar senha';
+        throw AuthException(message);
+      }
+    } on DioException catch (e) {
+      throw AuthException(e.getErrorMessage('Erro ao alterar senha'));
+    }
+  }
+
+  Future<User> uploadAvatar(String filePath) async {
+    try {
+      final fileName = filePath.split('/').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _apiClient.dio.post(
+        AppEndpoints.uploadAvatar,
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data);
+      }
+      final data = response.data;
+      final message = (data is Map && data['detail'] != null)
+          ? data['detail'].toString()
+          : 'Erro ao fazer upload da foto de perfil';
+      throw AuthException(message);
+    } on DioException catch (e) {
+      throw AuthException(e.getErrorMessage('Erro ao fazer upload da foto de perfil'));
     }
   }
 }

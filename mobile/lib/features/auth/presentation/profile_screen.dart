@@ -10,6 +10,7 @@ import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/shared/models/user.dart';
 
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -18,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     getIt<SyncManager>().onSyncSuccess = null;
     super.dispose();
   }
+
+  // Removido carregamento local do avatar pois agora é obtido diretamente do backend.
 
   @override
   Widget build(BuildContext context) {
@@ -72,13 +76,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _SettingsTile(
                       icon: LucideIcons.user,
                       title: "Editar perfil",
-                      onTap: () {},
+                      onTap: () => context.push('/profile/edit'),
                     ),
                     const Divider(),
                     _SettingsTile(
                       icon: LucideIcons.lock,
                       title: "Segurança e Senha",
-                      onTap: () {},
+                      onTap: () => context.push('/profile/change-password'),
                     ),
                     const Divider(),
                     _SettingsTile(
@@ -98,6 +102,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: LucideIcons.users,
                           title: "Gestão de Usuários",
                           onTap: () => context.push('/users'),
+                        ),
+                        const Divider(),
+                        _SettingsTile(
+                          icon: LucideIcons.settings,
+                          title: "Configurações do Sistema",
+                          onTap: () => context.push('/admin/settings'),
                         ),
                         const Divider(),
                       ],
@@ -228,8 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SettingsTile(
                   icon: LucideIcons.info,
                   title: "Sobre o App",
-                  trailing: const Text("v1.0.0"),
-                  onTap: () {},
+                  onTap: () => _showAboutDialog(context),
                 ),
                 _SettingsTile(
                   icon: LucideIcons.logOut,
@@ -288,50 +297,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
             CircleAvatar(
               radius: 32,
               backgroundColor: AppColors.glassWhite,
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                  ? NetworkImage(user.avatarUrl!)
+                  : null,
+              child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                  ? Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.glassWhite,
-                borderRadius: BorderRadius.circular(AppRadius.badge),
-              ),
-              child: Text(
-                user.role == UserRole.admin
-                    ? "Administrador"
-                    : user.role == UserRole.manager
-                        ? "Gestor"
-                        : "Inspetor Sênior",
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Text(
-              user.name,
+              '${user.name} | ${user.role == UserRole.admin ? "Administrador" : user.role == UserRole.manager ? "Gestor" : "Inspetor Sênior"}',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              user.email,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 12,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.cardLg),
+          ),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.info, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Text(
+                'Sobre o App',
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.primaryDeep,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vistor AI',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Inspeções técnicas de infraestrutura potencializadas por inteligência artificial.',
+                style: TextStyle(color: AppColors.subtextLight),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Versão do App:',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.badge),
+                    ),
+                    child: const Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -386,6 +460,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -431,14 +507,12 @@ class _SettingsCard extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Widget? trailing;
   final VoidCallback onTap;
   final Color? color;
 
   const _SettingsTile({
     required this.icon,
     required this.title,
-    this.trailing,
     required this.onTap,
     this.color,
   });
@@ -464,7 +538,7 @@ class _SettingsTile extends StatelessWidget {
           color: color,
         ),
       ),
-      trailing: trailing ?? const Icon(LucideIcons.chevronRight, size: 18),
+      trailing: const Icon(LucideIcons.chevronRight, size: 18),
     );
   }
 }

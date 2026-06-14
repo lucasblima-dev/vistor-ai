@@ -47,7 +47,7 @@ async def register(
         db, user_id=str(user.id), entity="user", entity_id=str(user.id), 
         action="register"
     )
-    return user
+    return UserOut.model_validate(user)
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
@@ -72,4 +72,8 @@ async def logout(
 
 @router.get("/me", response_model=UserOut)
 async def get_me(user: User = Depends(get_current_user)):
-    return user
+    from app.services import storage_service
+    out = UserOut.model_validate(user)
+    if user.avatar_key:
+        out.avatar_url = await storage_service.get_presigned_download_url("avatars", user.avatar_key)
+    return out

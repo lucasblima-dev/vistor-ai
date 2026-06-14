@@ -729,7 +729,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
 
     if (isOpen) {
       return Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           boxShadow: [
@@ -750,7 +750,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                         icon: const Icon(LucideIcons.play, size: 16),
                         label: const Text('Iniciar'),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -763,7 +763,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                         label: const Text('Atribuir Inspetor'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -774,7 +774,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                   child: ElevatedButton(
                     onPressed: isUpdating ? null : () => context.read<InspectionDetailCubit>().updateStatus(InspectionStatus.inProgress),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: AppColors.primary,
                     ),
                     child: isUpdating
@@ -791,7 +791,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
 
     if (isInProgress) {
       return Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           boxShadow: [
@@ -816,7 +816,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.grey,
                         side: const BorderSide(color: Colors.grey),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
@@ -841,7 +841,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.success,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
@@ -902,7 +902,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
 
     if (isResolved) {
       return Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           boxShadow: [
@@ -927,7 +927,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.grey,
                         side: const BorderSide(color: Colors.grey),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
@@ -942,7 +942,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           )
                         : ElevatedButton.icon(
@@ -961,7 +961,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
                   ),
