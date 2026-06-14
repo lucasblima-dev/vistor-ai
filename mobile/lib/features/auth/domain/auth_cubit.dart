@@ -130,6 +130,18 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> uploadAvatar(String filePath) async {
+    try {
+      final updatedUser = await _authRepository.uploadAvatar(filePath);
+      await _tokenStorage.saveUser(updatedUser);
+      emit(AuthState.authenticated(updatedUser));
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Erro inesperado ao enviar foto de perfil.');
+    }
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,

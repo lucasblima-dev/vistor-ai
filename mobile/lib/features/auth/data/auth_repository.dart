@@ -187,5 +187,31 @@ class AuthRepository {
       throw AuthException(message);
     }
   }
+
+  Future<User> uploadAvatar(String filePath) async {
+    try {
+      final fileName = filePath.split('/').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _apiClient.dio.post(
+        AppEndpoints.uploadAvatar,
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data);
+      }
+      final message = response.data['detail'] ?? 'Erro ao fazer upload da foto de perfil';
+      throw AuthException(message);
+    } on DioException catch (e) {
+      final message = e.response?.data['detail'] ?? 'Erro ao fazer upload da foto de perfil';
+      throw AuthException(message);
+    }
+  }
 }
 

@@ -9,7 +9,6 @@ import 'package:vistor_ai_mobile/core/services/theme_service.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_state.dart';
 import 'package:vistor_ai_mobile/shared/models/user.dart';
-import 'package:vistor_ai_mobile/shared/widgets/error_snackbar.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -20,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     getIt<SyncManager>().onSyncSuccess = null;
     super.dispose();
   }
+
+  // Removido carregamento local do avatar pois agora é obtido diretamente do backend.
 
   @override
   Widget build(BuildContext context) {
@@ -74,13 +76,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _SettingsTile(
                       icon: LucideIcons.user,
                       title: "Editar perfil",
-                      onTap: () => _showEditProfileDialog(context, user),
+                      onTap: () => context.push('/profile/edit'),
                     ),
                     const Divider(),
                     _SettingsTile(
                       icon: LucideIcons.lock,
                       title: "Segurança e Senha",
-                      onTap: () => _showChangePasswordDialog(context),
+                      onTap: () => context.push('/profile/change-password'),
                     ),
                     const Divider(),
                     _SettingsTile(
@@ -236,8 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SettingsTile(
                   icon: LucideIcons.info,
                   title: "Sobre o App",
-                  trailing: const Text("v1.0.0"),
-                  onTap: () {},
+                  onTap: () => _showAboutDialog(context),
                 ),
                 _SettingsTile(
                   icon: LucideIcons.logOut,
@@ -296,50 +297,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
             CircleAvatar(
               radius: 32,
               backgroundColor: AppColors.glassWhite,
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                  ? NetworkImage(user.avatarUrl!)
+                  : null,
+              child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                  ? Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.glassWhite,
-                borderRadius: BorderRadius.circular(AppRadius.badge),
-              ),
-              child: Text(
-                user.role == UserRole.admin
-                    ? "Administrador"
-                    : user.role == UserRole.manager
-                        ? "Gestor"
-                        : "Inspetor Sênior",
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Text(
-              user.name,
+              '${user.name} | ${user.role == UserRole.admin ? "Administrador" : user.role == UserRole.manager ? "Gestor" : "Inspetor Sênior"}',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              user.email,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 12,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.cardLg),
+          ),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.info, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Text(
+                'Sobre o App',
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.primaryDeep,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vistor AI',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Inspeções técnicas de infraestrutura potencializadas por inteligência artificial.',
+                style: TextStyle(color: AppColors.subtextLight),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Versão do App:',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.badge),
+                    ),
+                    child: const Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -395,256 +461,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showEditProfileDialog(BuildContext context, User user) {
-    final nameController = TextEditingController(text: user.name);
-    final emailController = TextEditingController(text: user.email);
-    final formKey = GlobalKey<FormState>();
-    bool isSaving = false;
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Editar Perfil'),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome',
-                        prefixIcon: Icon(LucideIcons.user, size: 20),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor, insira o seu nome.';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'E-mail',
-                        prefixIcon: Icon(LucideIcons.mail, size: 20),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor, insira o seu e-mail.';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                          return 'Insira um e-mail válido.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          if (formKey.currentState?.validate() ?? false) {
-                            setState(() {
-                              isSaving = true;
-                            });
-                            try {
-                              await context.read<AuthCubit>().updateProfile(
-                                    name: nameController.text.trim(),
-                                    email: emailController.text.trim(),
-                                  );
-                              if (context.mounted) {
-                                Navigator.pop(dialogContext);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Perfil atualizado com sucesso!'),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              setState(() {
-                                isSaving = false;
-                              });
-                              if (context.mounted) {
-                                showErrorSnackbar(context, e.toString());
-                              }
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Salvar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isSaving = false;
-    bool obscureCurrent = true;
-    bool obscureNew = true;
-    bool obscureConfirm = true;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Alterar Senha'),
-              content: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: currentPasswordController,
-                        obscureText: obscureCurrent,
-                        decoration: InputDecoration(
-                          labelText: 'Senha Atual',
-                          prefixIcon: const Icon(LucideIcons.lock, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(obscureCurrent ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
-                            onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira a senha atual.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: newPasswordController,
-                        obscureText: obscureNew,
-                        decoration: InputDecoration(
-                          labelText: 'Nova Senha',
-                          prefixIcon: const Icon(LucideIcons.shieldAlert, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(obscureNew ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
-                            onPressed: () => setState(() => obscureNew = !obscureNew),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira a nova senha.';
-                          }
-                          if (value.length < 8) {
-                            return 'A senha deve ter pelo menos 8 caracteres.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: confirmPasswordController,
-                        obscureText: obscureConfirm,
-                        decoration: InputDecoration(
-                          labelText: 'Confirmar Nova Senha',
-                          prefixIcon: const Icon(LucideIcons.shieldCheck, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(obscureConfirm ? LucideIcons.eyeOff : LucideIcons.eye, size: 18),
-                            onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Confirme a nova senha.';
-                          }
-                          if (value != newPasswordController.text) {
-                            return 'As senhas não coincidem.';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          if (formKey.currentState?.validate() ?? false) {
-                            setState(() {
-                              isSaving = true;
-                            });
-                            try {
-                              await context.read<AuthCubit>().changePassword(
-                                    currentPassword: currentPasswordController.text,
-                                    newPassword: newPasswordController.text,
-                                  );
-                              if (context.mounted) {
-                                Navigator.pop(dialogContext);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Senha alterada com sucesso!'),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              setState(() {
-                                isSaving = false;
-                              });
-                              if (context.mounted) {
-                                showErrorSnackbar(context, e.toString());
-                              }
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Alterar Senha'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 }
 
 class _SectionLabel extends StatelessWidget {

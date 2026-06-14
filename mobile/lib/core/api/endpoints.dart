@@ -8,6 +8,7 @@ class AppEndpoints {
   static const String fcmToken = '/users/me/fcm-token';
   static const String updateMe = '/users/me';
   static const String changePassword = '/users/me/change-password';
+  static const String uploadAvatar = '/users/me/avatar';
 
   // Inspections
   static const String inspections = '/inspections/';

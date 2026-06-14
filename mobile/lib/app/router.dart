@@ -11,6 +11,9 @@ import 'package:vistor_ai_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/profile_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/forgot_password_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/edit_profile_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/change_password_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/user_management_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/admin_settings_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
@@ -35,6 +38,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
   static const String home = '/inspections';
   static const String createInspection = '/inspections/create';
   static String inspection(String id) => '/inspections/$id';
@@ -44,6 +48,8 @@ class AppRoutes {
   static String report(String id) => '/reports/$id';
 
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
+  static const String changePassword = '/profile/change-password';
   
   // Gestão
   static const String teamManagement = '/team';
@@ -148,20 +154,21 @@ GoRouter buildRouter(AuthCubit authCubit) {
       final authState = authCubit.state;
       final bool loggingIn = state.matchedLocation == AppRoutes.login;
       final bool registering = state.matchedLocation == AppRoutes.register;
+      final bool isForgotPassword = state.matchedLocation == AppRoutes.forgotPassword;
       final bool isSplash = state.matchedLocation == AppRoutes.splash;
 
       // 1. Redirecionamento de Auth
       final String? authRedirect = authState.maybeWhen(
         authenticated: (_) {
-          if (loggingIn || registering || isSplash) return AppRoutes.home;
+          if (loggingIn || registering || isSplash || isForgotPassword) return AppRoutes.home;
           return null;
         },
         unauthenticated: () {
-          if (loggingIn || registering) return null;
+          if (loggingIn || registering || isForgotPassword) return null;
           return AppRoutes.login;
         },
         error: (_) {
-           if (loggingIn || registering) return null;
+           if (loggingIn || registering || isForgotPassword) return null;
            return AppRoutes.login;
         },
         orElse: () => null,
@@ -226,6 +233,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Shell para as abas principais
@@ -317,6 +328,14 @@ GoRouter buildRouter(AuthCubit authCubit) {
                   GoRoute(
                     path: 'archive',
                     builder: (context, state) => const ArchivedInspectionsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) => const EditProfileScreen(),
+                  ),
+                  GoRoute(
+                    path: 'change-password',
+                    builder: (context, state) => const ChangePasswordScreen(),
                   ),
                 ],
               ),

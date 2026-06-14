@@ -21,6 +21,7 @@ abstract class User with _$User {
     required UserRole role,
     @Default(true) bool isActive,
     @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'avatar_url') String? avatarUrl,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
