@@ -855,14 +855,12 @@ Sprint 7: IA (HuggingFace) + PDF (WeasyPrint)
 - Criada migration `0006_add_media_status` para adicionar a coluna `status` e o Enum `media_status_enum` na tabela `media`, corrigindo a discrepância entre o modelo SQLAlchemy e o banco de dados.
 - Implementada a variável `MINIO_EXTERNAL_ENDPOINT` no `config.py` e `.env` para resolver o problema de resolução de host (`minio`) em acessos fora do Docker (cURL, Mobile).
 - Refatorado `storage_service.py` para utilizar o endpoint externo na geração de URLs pré-assinadas (Presigned URLs), garantindo acessibilidade para o aplicativo Flutter.
-- Criado script `seed_user.py` para facilitar a criação de usuários de teste enquanto o módulo de Admin não é finalizado.
 
 ### Estado dos arquivos tocados
 
 - `backend/alembic/versions/0006_add_media_status.py` — criado.
 - `backend/app/config.py" — atualizado.
 - `backend/app/services/storage_service.py" — refatorado.
-- `backend/seed_user.py" — criado.
 - `.env` e `.env.example` — atualizados.
 
 ### Validações que passaram
@@ -1124,3 +1122,42 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 
 - Análise estática do código confirmada.
 - Endpoint segue o padrão de schemas `UserCreate` e `UserOut` já estabelecidos.
+
+## Task 31
+
+**Data:** 13/06/2026
+**Sprint:** Ajustes de Administração e Autenticação (Bootstrap & Lockout)
+**Sessão:** Implementação de Autocriação de Admin e Menu Dinâmico
+
+### O que foi feito
+
+- Configurada criação automática do usuário administrador inicial (bootstrap) via variáveis de ambiente no startup da API.
+- Adicionado tratamento de erro contra tabelas inexistentes no lifespan do FastAPI para bases limpas.
+- Desenvolvido menu de navegação dinâmico no app Flutter (BottomNavigationBar) chaveando entre Admin e Inspetor/Gestor.
+- Implementada proteção robusta contra auto-desativação e auto-rebaixamento de privilégios de administradores no backend e no frontend mobile.
+- Ocultado botão de voltar das telas administrativas quando renderizadas como abas principais.
+- Excluído o script obsoleto `seed_user.py` e ajustadas todas as menções na documentação e no `.gitignore`.
+- Atualizada documentação de setup no `README.md` e `docs/backend/GEMINI.md` explicando o fluxo de bootstrap de admin e o restart do container.
+
+### Estado dos arquivos tocados
+
+- `.env` e `.env.example` — variáveis de bootstrap adicionadas.
+- `.gitignore` — remoção de exclusão do script seed_user.
+- `README.md` — instruções de bootstrap e restart incluídas.
+- `docs/backend/GEMINI.md` — documentação de setup do admin atualizada.
+- `backend/app/config.py` — campos de Settings do admin adicionados.
+- `backend/app/main.py` — chamada de bootstrap no lifespan inserida.
+- `backend/app/routers/users.py` — validação de alteração de role do próprio usuário adicionada.
+- `backend/app/services/auth_service.py` — implementada rotina create_initial_admin_if_not_exists.
+- `mobile/lib/app/router.dart` — abas e visualizações dinâmicas baseadas na role configuradas.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — menu de gerenciamento adicionado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — botões de ação e voltar protegidos.
+- `mobile/lib/features/inspection/presentation/team_management_screen.dart` — botão de voltar protegido.
+- `mobile/lib/features/map/presentation/export_data_screen.dart` — botão de voltar protegido.
+- `backend/seed_user.py` — removido fisicamente.
+
+### Validações que passaram
+
+- Recuperação automática de lockout administrativo validada localmente.
+- Proteções de alteração de papel e desativação validadas com sucesso na API e na interface Flutter.
+- Fluxo de menus do administrador validado no aplicativo.

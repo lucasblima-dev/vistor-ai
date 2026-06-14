@@ -5,12 +5,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import auth, users, inspections, media, reports, geo, audit
 from app.services import storage_service
+from app.database import AsyncSessionLocal
+from app.services.auth_service import create_initial_admin_if_not_exists
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Inicializa buckets no MinIO
     await storage_service.ensure_buckets_exist()
+    
+    # Inicializa o administrador padrão se necessário
+    async with AsyncSessionLocal() as db:
+        await create_initial_admin_if_not_exists(db)
+        
     yield
 
 

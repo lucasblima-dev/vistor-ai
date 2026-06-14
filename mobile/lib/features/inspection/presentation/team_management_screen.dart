@@ -106,11 +106,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
             children: [
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const SizedBox(width: 8),
+                  if (Navigator.of(context).canPop()) ...[
+                    IconButton(
+                      icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   const Text(
                     'Gestão de Equipe',
                     style: TextStyle(

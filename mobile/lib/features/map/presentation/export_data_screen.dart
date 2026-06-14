@@ -160,14 +160,16 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               // Header
               Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      LucideIcons.arrowLeft,
-                      color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                  if (Navigator.of(context).canPop()) ...[
+                    IconButton(
+                      icon: Icon(
+                        LucideIcons.arrowLeft,
+                        color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
                     'Exportar Dados',
                     style: TextStyle(

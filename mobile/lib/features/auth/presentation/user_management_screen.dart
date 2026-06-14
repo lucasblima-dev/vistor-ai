@@ -93,14 +93,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       // Header
                       Row(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              LucideIcons.arrowLeft,
-                              color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                          if (Navigator.of(context).canPop()) ...[
+                            IconButton(
+                              icon: Icon(
+                                LucideIcons.arrowLeft,
+                                color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
                             ),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          const SizedBox(width: 8),
+                            const SizedBox(width: 8),
+                          ],
                           Icon(
                             LucideIcons.shield,
                             color: isDark ? AppColors.primaryDark : AppColors.primary,
@@ -456,17 +458,20 @@ class UserCard extends StatelessWidget {
             onSelected: (value) => _handleAction(value, context),
             itemBuilder: (context) {
               return [
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'role_admin',
-                  child: Text('Tornar Administrador'),
+                  enabled: !isSelf,
+                  child: const Text('Tornar Administrador'),
                 ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'role_manager',
-                  child: Text('Tornar Gestor'),
+                  enabled: !isSelf,
+                  child: const Text('Tornar Gestor'),
                 ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'role_inspector',
-                  child: Text('Tornar Inspetor'),
+                  enabled: !isSelf,
+                  child: const Text('Tornar Inspetor'),
                 ),
                 const PopupMenuDivider(),
                 if (user.isActive)
@@ -479,9 +484,10 @@ class UserCard extends StatelessWidget {
                     ),
                   )
                 else
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'toggle_active',
-                    child: Text(
+                    enabled: !isSelf,
+                    child: const Text(
                       'Reativar conta',
                       style: TextStyle(color: AppColors.success),
                     ),

@@ -172,17 +172,16 @@ alembic upgrade head
 > [!IMPORTANT]
 > **Alterações de Esquema:** Ao modificar um modelo SQLAlchemy, gere uma nova migração executando `alembic revision --autogenerate -m "descricao"`. **Nunca** modifique arquivos de migração históricos que já foram integrados ao repositório.
 
-### 5. Criação de Usuário de Testes (Seed)
+### 5. Administrador Inicial (Bootstrap)
 
-Execute o script para popular o banco local com a conta de teste:
+Toda vez que a aplicação é iniciada (ou após zerar o banco de dados), um administrador padrão é automaticamente criado no banco se nenhum administrador estiver cadastrado na tabela de usuários.
 
-```bash
-python seed_user.py
-```
+> [!NOTE]
+> **Fluxo em bancos zerados:** Na primeira subida dos containers com banco limpo, a tabela de usuários ainda não existe, portanto o bootstrap administrativo é pulado silenciosamente (registrando um aviso no log). **Após aplicar as migrações**, é necessário reiniciar o serviço da API (`docker compose restart api`) para disparar a lógica do ciclo de vida novamente e criar a conta do administrador padrão.
 
-* **Credenciais padrão:**
-  * **Usuário:** `test@example.com`
-  * **Senha:** `password123`
+Os dados de acesso padrão são lidos das variáveis do arquivo `.env` do backend:
+* **Usuário padrão:** `admin@vistor.ai` (configurável via `INITIAL_ADMIN_EMAIL`)
+* **Senha padrão:** `password123` (configurável via `INITIAL_ADMIN_PASSWORD`)
 
 ### 6. Execução Local e Testes
 

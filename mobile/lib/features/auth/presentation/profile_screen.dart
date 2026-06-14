@@ -88,6 +88,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
+                if (user.role == UserRole.admin || user.role == UserRole.manager) ...[
+                  const SizedBox(height: AppSpacing.sectionGap),
+                  const _SectionLabel(label: "GERENCIAMENTO"),
+                  _SettingsCard(
+                    children: [
+                      if (user.role == UserRole.admin) ...[
+                        _SettingsTile(
+                          icon: LucideIcons.users,
+                          title: "Gestão de Usuários",
+                          onTap: () => context.push('/users'),
+                        ),
+                        const Divider(),
+                      ],
+                      _SettingsTile(
+                        icon: LucideIcons.userCheck,
+                        title: "Gestão de Equipe",
+                        onTap: () => context.push('/team'),
+                      ),
+                      const Divider(),
+                      _SettingsTile(
+                        icon: LucideIcons.download,
+                        title: "Exportação de Dados",
+                        onTap: () => context.push('/export'),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sectionGap),
                 const _SectionLabel(label: "PREFERÊNCIAS"),
                 _SettingsCard(

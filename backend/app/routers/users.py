@@ -55,11 +55,17 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin"])),
 ):
-    if user_id == current_user.id and payload.is_active is False:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Você não pode desativar sua própria conta."
-        )
+    if user_id == current_user.id:
+        if payload.is_active is False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não pode desativar sua própria conta."
+            )
+        if payload.role is not None and payload.role != current_user.role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não pode alterar seu próprio papel (role)."
+            )
 
     query = select(User).where(User.id == user_id)
     result = await db.execute(query)
