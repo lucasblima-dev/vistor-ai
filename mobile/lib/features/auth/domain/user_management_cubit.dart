@@ -73,4 +73,36 @@ class UserManagementCubit extends Cubit<UserManagementState> {
       return false;
     }
   }
+
+  Future<bool> createUser({
+    required String name,
+    required String email,
+    required String password,
+    required UserRole role,
+  }) async {
+    final currentState = state.maybeMap(
+      loaded: (s) => s,
+      orElse: () => null,
+    );
+    if (currentState == null) return false;
+
+    emit(currentState.copyWith(isUpdating: true, error: null));
+    try {
+      await _userRepository.create(
+        name: name,
+        email: email,
+        password: password,
+        role: role,
+      );
+      final updatedUsers = await _userRepository.getAll();
+      emit(currentState.copyWith(users: updatedUsers, isUpdating: false));
+      return true;
+    } catch (e) {
+      emit(currentState.copyWith(
+        isUpdating: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
 }

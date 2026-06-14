@@ -67,4 +67,31 @@ class UserRepository {
       throw Exception(message);
     }
   }
+
+  Future<User> create({
+    required String name,
+    required String email,
+    required String password,
+    required UserRole role,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        AppEndpoints.users,
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'role': role.name,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        return User.fromJson(response.data);
+      }
+      throw Exception('Erro ao criar usuário');
+    } on DioException catch (e) {
+      final message = e.response?.data['detail'] ?? 'Erro ao criar usuário';
+      throw Exception(message);
+    }
+  }
 }

@@ -100,7 +100,7 @@ async def delete_object(bucket: str, key: str) -> None:
         )
 
 async def ensure_buckets_exist() -> None:
-    buckets = ["inspections", "thumbnails", "reports"]
+    buckets = ["inspections", "thumbnails", "reports", "avatars"]
     try:
         async with get_s3_client_context() as client:
             for bucket in buckets:

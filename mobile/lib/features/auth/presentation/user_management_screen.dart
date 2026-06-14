@@ -42,6 +42,190 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return parts[0][0].toUpperCase();
   }
 
+  void _showCreateUserDialog() {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    UserRole selectedRole = UserRole.inspector;
+    bool obscurePassword = true;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+
+            return AlertDialog(
+              backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
+                ),
+              ),
+              title: Row(
+                children: [
+                  const Icon(LucideIcons.userPlus, color: AppColors.primary, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Cadastrar Usuário',
+                    style: TextStyle(
+                      color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        style: TextStyle(color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight),
+                        decoration: const InputDecoration(
+                          labelText: 'Nome Completo',
+                          prefixIcon: Icon(LucideIcons.user, size: 20),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Informe o nome completo';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: emailController,
+                        style: TextStyle(color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight),
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'E-mail',
+                          prefixIcon: Icon(LucideIcons.mail, size: 20),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Informe o e-mail';
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                            return 'E-mail inválido';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: passwordController,
+                        style: TextStyle(color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight),
+                        obscureText: obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Senha',
+                          prefixIcon: const Icon(LucideIcons.lock, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              setDialogState(() {
+                                obscurePassword = !obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Informe a senha';
+                          }
+                          if (value.length < 8) {
+                            return 'A senha deve ter no mínimo 8 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<UserRole>(
+                        value: selectedRole,
+                        style: TextStyle(
+                          color: isDark ? AppColors.onSurfDark : AppColors.onSurfLight,
+                          fontSize: 14,
+                        ),
+                        dropdownColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                        decoration: const InputDecoration(
+                          labelText: 'Cargo / Função',
+                          prefixIcon: Icon(LucideIcons.shield, size: 20),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: UserRole.inspector,
+                            child: Text('Inspetor'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.manager,
+                            child: Text('Gestor'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.admin,
+                            child: Text('Administrador'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setDialogState(() {
+                              selectedRole = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.pop(dialogContext); // Close dialog
+                      final success = await _cubit.createUser(
+                        name: nameController.text.trim(),
+                        email: emailController.text.trim(),
+                        password: passwordController.text,
+                        role: selectedRole,
+                      );
+                      if (success) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Usuário criado com sucesso!'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Salvar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -54,6 +238,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreateUserDialog,
+        backgroundColor: AppColors.primary,
+        child: const Icon(LucideIcons.userPlus, color: Colors.white),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -130,6 +319,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
+                                // ignore: unnecessary_const
                               ),
                             ),
                           ),

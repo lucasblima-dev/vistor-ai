@@ -16,6 +16,7 @@ import 'package:vistor_ai_mobile/features/auth/presentation/edit_profile_screen.
 import 'package:vistor_ai_mobile/features/auth/presentation/change_password_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/user_management_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/admin_settings_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/audit_logs_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
@@ -75,7 +76,67 @@ class AppScaffold extends StatelessWidget {
           authenticated: (u) => u,
           orElse: () => null,
         );
-    final isManager = user?.role == UserRole.manager;
+    final role = user?.role ?? UserRole.inspector;
+
+    final List<NavigationDestination> destinations;
+    if (role == UserRole.admin) {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.activity),
+          label: 'Logs',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.users),
+          label: 'Usuários',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.download),
+          label: 'Exportar',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    } else if (role == UserRole.manager) {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.list),
+          label: 'Inspeções',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.download),
+          label: 'Exportar',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.users),
+          label: 'Equipe',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    } else {
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(LucideIcons.list),
+          label: 'Inspeções',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.map),
+          label: 'Mapa',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.fileText),
+          label: 'Laudos',
+        ),
+        NavigationDestination(
+          icon: Icon(LucideIcons.user),
+          label: 'Perfil',
+        ),
+      ];
+    }
 
     return Scaffold(
       body: Column(
@@ -87,43 +148,7 @@ class AppScaffold extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(index),
-        destinations: isManager
-            ? const [
-                NavigationDestination(
-                  icon: Icon(LucideIcons.list),
-                  label: 'Inspeções',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.map),
-                  label: 'Mapa',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.userCheck),
-                  label: 'Equipe',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.user),
-                  label: 'Perfil',
-                ),
-              ]
-            : const [
-                NavigationDestination(
-                  icon: Icon(LucideIcons.list),
-                  label: 'Inspeções',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.map),
-                  label: 'Mapa',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.fileText),
-                  label: 'Laudos',
-                ),
-                NavigationDestination(
-                  icon: Icon(LucideIcons.user),
-                  label: 'Perfil',
-                ),
-              ],
+        destinations: destinations,
       ),
     );
   }
@@ -245,12 +270,21 @@ GoRouter buildRouter(AuthCubit authCubit) {
           return AppScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Aba: Inspeções
+          // Aba: Inspeções / Logs
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) => const InspectionListScreen(),
+                builder: (context, state) {
+                  final user = context.read<AuthCubit>().state.maybeWhen(
+                        authenticated: (u) => u,
+                        orElse: () => null,
+                      );
+                  if (user?.role == UserRole.admin) {
+                    return const AuditLogsScreen();
+                  }
+                  return const InspectionListScreen();
+                },
                 routes: [
                   GoRoute(
                     path: 'create', // /inspections/create
@@ -272,17 +306,29 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Mapa
+          // Aba: Mapa / Usuários / Exportar
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.map,
-                builder: (context, state) => const MapScreen(),
+                builder: (context, state) {
+                  final user = context.read<AuthCubit>().state.maybeWhen(
+                        authenticated: (u) => u,
+                        orElse: () => null,
+                      );
+                  if (user?.role == UserRole.admin) {
+                    return const UserManagementScreen();
+                  }
+                  if (user?.role == UserRole.manager) {
+                    return const ExportDataScreen();
+                  }
+                  return const MapScreen();
+                },
               ),
             ],
           ),
 
-          // Aba: Laudos
+          // Aba: Laudos / Equipe / Exportar
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -292,6 +338,9 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         authenticated: (u) => u,
                         orElse: () => null,
                       );
+                  if (user?.role == UserRole.admin) {
+                    return const ExportDataScreen();
+                  }
                   if (user?.role == UserRole.manager) {
                     return const TeamManagementScreen();
                   }
