@@ -12,6 +12,7 @@ import 'package:vistor_ai_mobile/features/auth/presentation/profile_screen.dart'
 import 'package:vistor_ai_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/splash_screen.dart';
 import 'package:vistor_ai_mobile/features/auth/presentation/user_management_screen.dart';
+import 'package:vistor_ai_mobile/features/auth/presentation/admin_settings_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/inspection_list_screen.dart';
 import 'package:vistor_ai_mobile/features/inspection/presentation/create_inspection_screen.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String userManagement = '/users';
   static const String exportData = '/export';
   static const String allReports = '/reports-all';
+  static const String adminSettings = '/admin/settings';
 
   // Utilitário
   static const String offline = '/offline';
@@ -67,7 +69,6 @@ class AppScaffold extends StatelessWidget {
           authenticated: (u) => u,
           orElse: () => null,
         );
-    final isAdmin = user?.role == UserRole.admin;
     final isManager = user?.role == UserRole.manager;
 
     return Scaffold(
@@ -80,62 +81,43 @@ class AppScaffold extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(index),
-        destinations: isAdmin
+        destinations: isManager
             ? const [
                 NavigationDestination(
-                  icon: Icon(LucideIcons.users),
-                  label: 'Usuários',
+                  icon: Icon(LucideIcons.list),
+                  label: 'Inspeções',
+                ),
+                NavigationDestination(
+                  icon: Icon(LucideIcons.map),
+                  label: 'Mapa',
                 ),
                 NavigationDestination(
                   icon: Icon(LucideIcons.userCheck),
                   label: 'Equipe',
                 ),
                 NavigationDestination(
-                  icon: Icon(LucideIcons.download),
-                  label: 'Exportar',
+                  icon: Icon(LucideIcons.user),
+                  label: 'Perfil',
+                ),
+              ]
+            : const [
+                NavigationDestination(
+                  icon: Icon(LucideIcons.list),
+                  label: 'Inspeções',
+                ),
+                NavigationDestination(
+                  icon: Icon(LucideIcons.map),
+                  label: 'Mapa',
+                ),
+                NavigationDestination(
+                  icon: Icon(LucideIcons.fileText),
+                  label: 'Laudos',
                 ),
                 NavigationDestination(
                   icon: Icon(LucideIcons.user),
                   label: 'Perfil',
                 ),
-              ]
-            : isManager
-                ? const [
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.list),
-                      label: 'Inspeções',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.map),
-                      label: 'Mapa',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.userCheck),
-                      label: 'Equipe',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.user),
-                      label: 'Perfil',
-                    ),
-                  ]
-                : const [
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.list),
-                      label: 'Inspeções',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.map),
-                      label: 'Mapa',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.fileText),
-                      label: 'Laudos',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(LucideIcons.user),
-                      label: 'Perfil',
-                    ),
-                  ],
+              ],
       ),
     );
   }
@@ -193,13 +175,14 @@ GoRouter buildRouter(AuthCubit authCubit) {
           final isTeamRoute = state.matchedLocation.startsWith(AppRoutes.teamManagement);
           final isExportRoute = state.matchedLocation.startsWith(AppRoutes.exportData);
           final isUserRoute = state.matchedLocation.startsWith(AppRoutes.userManagement);
+          final isAdminSettingsRoute = state.matchedLocation.startsWith(AppRoutes.adminSettings);
 
           if (isTeamRoute || isExportRoute) {
             if (user.role != UserRole.manager && user.role != UserRole.admin) {
               return AppRoutes.home; // Apenas manager ou admin
             }
           }
-          if (isUserRoute) {
+          if (isUserRoute || isAdminSettingsRoute) {
             if (user.role != UserRole.admin) {
               return AppRoutes.home; // Apenas admin
             }
@@ -218,6 +201,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
         AppRoutes.teamManagement,
         AppRoutes.userManagement,
         AppRoutes.exportData,
+        AppRoutes.adminSettings,
       ];
 
       if (networkDependentRoutes.any((route) => state.matchedLocation.startsWith(route))) {
@@ -250,21 +234,12 @@ GoRouter buildRouter(AuthCubit authCubit) {
           return AppScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Aba: Inspeções -> Usuários (Admin)
+          // Aba: Inspeções
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) {
-                  final user = context.read<AuthCubit>().state.maybeWhen(
-                        authenticated: (u) => u,
-                        orElse: () => null,
-                      );
-                  if (user?.role == UserRole.admin) {
-                    return const UserManagementScreen();
-                  }
-                  return const InspectionListScreen();
-                },
+                builder: (context, state) => const InspectionListScreen(),
                 routes: [
                   GoRoute(
                     path: 'create', // /inspections/create
@@ -286,26 +261,17 @@ GoRouter buildRouter(AuthCubit authCubit) {
             ],
           ),
 
-          // Aba: Mapa -> Equipe (Admin)
+          // Aba: Mapa
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.map,
-                builder: (context, state) {
-                  final user = context.read<AuthCubit>().state.maybeWhen(
-                        authenticated: (u) => u,
-                        orElse: () => null,
-                      );
-                  if (user?.role == UserRole.admin) {
-                    return const TeamManagementScreen();
-                  }
-                  return const MapScreen();
-                },
+                builder: (context, state) => const MapScreen(),
               ),
             ],
           ),
 
-          // Aba: Laudos -> Exportar (Admin) / Equipe (Gestor)
+          // Aba: Laudos
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -315,9 +281,6 @@ GoRouter buildRouter(AuthCubit authCubit) {
                         authenticated: (u) => u,
                         orElse: () => null,
                       );
-                  if (user?.role == UserRole.admin) {
-                    return const ExportDataScreen();
-                  }
                   if (user?.role == UserRole.manager) {
                     return const TeamManagementScreen();
                   }
@@ -378,6 +341,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: AppRoutes.allReports,
         builder: (context, state) => const ReportListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminSettings,
+        builder: (context, state) => const AdminSettingsScreen(),
       ),
 
       // Utilitário

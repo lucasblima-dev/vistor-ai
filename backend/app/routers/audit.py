@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, require_role
 from app.dependencies.db import get_db
 from app.models.user import User
 from app.models.audit_log import AuditLog
@@ -18,7 +18,7 @@ async def list_audit_logs(
     entity_id: Optional[UUID] = None,
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(["admin"])),
 ):
     query = select(AuditLog, User.name).outerjoin(User, AuditLog.user_id == User.id)
     

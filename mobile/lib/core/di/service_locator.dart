@@ -9,8 +9,10 @@ import 'package:vistor_ai_mobile/core/services/theme_service.dart';
 import 'package:vistor_ai_mobile/core/services/notification_service.dart';
 import 'package:vistor_ai_mobile/features/auth/data/auth_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/data/user_repository.dart';
+import 'package:vistor_ai_mobile/features/auth/data/admin_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/auth_cubit.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/user_management_cubit.dart';
+import 'package:vistor_ai_mobile/features/auth/domain/admin_settings_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/create_inspection_cubit.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_cubit.dart';
@@ -65,6 +67,10 @@ Future<void> setupLocator() async {
     () => UserRepository(apiClient: getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<AdminRepository>(
+    () => AdminRepository(apiClient: getIt<ApiClient>()),
+  );
+
   getIt.registerLazySingleton<InspectionRepository>(
     () => InspectionRepository(
       apiClient: getIt<ApiClient>(),
@@ -99,6 +105,12 @@ Future<void> setupLocator() async {
   getIt.registerFactory<UserManagementCubit>(
     () => UserManagementCubit(
       userRepository: getIt<UserRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<AdminSettingsCubit>(
+    () => AdminSettingsCubit(
+      adminRepository: getIt<AdminRepository>(),
     ),
   );
 
