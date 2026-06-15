@@ -532,7 +532,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
           children: [
             const Row(
               children: [
-                Icon(LucideIcons.bot, color: AppColors.offline),
+                Icon(LucideIcons.sparkles, color: AppColors.offline),
                 SizedBox(width: 8),
                 Text(
                   'Análise de Inteligência Artificial',
@@ -584,7 +584,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         children: [
           const Row(
             children: [
-              Icon(LucideIcons.bot, color: AppColors.primary),
+              Icon(LucideIcons.sparkles, color: AppColors.primary),
               SizedBox(width: 8),
               Text(
                 'Análise de Inteligência Artificial',

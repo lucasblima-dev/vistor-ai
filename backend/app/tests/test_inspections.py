@@ -177,3 +177,70 @@ async def test_reclassify_no_photos(authed_client: AsyncClient):
     response = await authed_client.post(f"/api/inspections/{insp_id}/reclassify")
     assert response.status_code == 400
     assert "não há fotos confirmadas" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_get_inspection_history_owner_success(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    inspector_token: str
+):
+    import uuid
+    from app.models.audit_log import AuditLog
+    
+    # 1. Cria inspeção
+    res_create = await client.post(
+        "/api/inspections/",
+        json={"title": "History Test", "category": "c", "lat": 0, "lon": 0},
+        headers={"Authorization": f"Bearer {inspector_token}"}
+    )
+    insp_id = res_create.json()["id"]
+    inspector_id = res_create.json()["inspector"]["id"]
+    
+    # 2. Cria alguns logs de auditoria fictícios associados
+    log = AuditLog(
+        user_id=uuid.UUID(inspector_id),
+        entity="inspection",
+        entity_id=uuid.UUID(insp_id),
+        action="create",
+        new_value={"status": "open"}
+    )
+    db_session.add(log)
+    await db_session.commit()
+    
+    # 3. GET /inspections/{id}/history como dono -> 200
+    response = await client.get(
+        f"/api/inspections/{insp_id}/history",
+        headers={"Authorization": f"Bearer {inspector_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["action"] == "create"
+    assert data[0]["user_name"] == "Inspector"
+
+@pytest.mark.asyncio
+async def test_get_inspection_history_idor_forbidden(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    inspector_token: str
+):
+    # 1. Cria usuário 'outro inspetor'
+    other_payload = UserCreate(name="Other Insp", email="other_history@v.ai", password="password123", role=UserRole.inspector)
+    await create_user(db_session, other_payload)
+    res_login = await client.post("/api/auth/login", json={"email": "other_history@v.ai", "password": "password123"})
+    other_token = res_login.json()["access_token"]
+    
+    # Outro inspetor cria a inspeção
+    res_create = await client.post(
+        "/api/inspections/",
+        json={"title": "Other Insp Inspection", "category": "c", "lat": 0, "lon": 0},
+        headers={"Authorization": f"Bearer {other_token}"}
+    )
+    insp_id = res_create.json()["id"]
+    
+    # 2. GET /inspections/{id}/history como inspetor principal (que não é dono) -> 403 (IDOR)
+    response = await client.get(
+        f"/api/inspections/{insp_id}/history",
+        headers={"Authorization": f"Bearer {inspector_token}"}
+    )
+    assert response.status_code == 403
