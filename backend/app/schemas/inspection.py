@@ -74,8 +74,9 @@ class InspectionOut(BaseModel):
     updated_at: datetime
     
     inspector: UserOut
+    assigned: Optional[UserOut] = None
     media: List[MediaOut] = []
-
+ 
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator('location', mode='before')

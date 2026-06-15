@@ -49,7 +49,7 @@ class MediaService {
       final uploadDio = Dio();
       final uploadResponse = await uploadDio.put(
         uploadUrl,
-        data: fileToUpload.openRead(),
+        data: fileToUpload.readAsBytesSync(),
         options: Options(
           headers: {
             'Content-Type': contentType,

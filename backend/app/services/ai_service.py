@@ -22,6 +22,22 @@ async def _classify_local_fallback(image_bytes: bytes) -> dict:
         "source": "local_fallback"
     }
 
+def compress_image_for_ai(image_bytes: bytes) -> bytes:
+    from PIL import Image
+    import io
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        img.thumbnail((800, 800))
+        
+        buffer = io.BytesIO()
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.save(buffer, format="JPEG", quality=80)
+        return buffer.getvalue()
+    except Exception as e:
+        logger.error(f"Error compressing image for AI: {e}")
+        return image_bytes
+
 async def classify_image(image_bytes: bytes) -> dict:
     url = "https://router.huggingface.co/v1/chat/completions"
     
@@ -30,23 +46,36 @@ async def classify_image(image_bytes: bytes) -> dict:
         "Content-Type": "application/json"
     }
     
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    compressed_bytes = compress_image_for_ai(image_bytes)
+    image_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
     
     prompt = (
         "Classifique a severidade e o tipo de dano estrutural desta imagem de inspeção técnica.\n"
         "Categorias possíveis:\n"
-        "1. 'rachadura crítica'\n"
-        "2. 'infiltração ou umidade'\n"
-        "3. 'corrosão de armadura'\n"
-        "4. 'estrutura intacta e sem danos'\n\n"
+        "1. 'Rachadura crítica'\n"
+        "2. ':Infiltração ou umidade'\n"
+        "3. 'Corrosão de armadura'\n"
+        "4. 'Estrutura intacta e sem danos'\n\n"
         "Retorne a resposta EXCLUSIVAMENTE em formato JSON puro, sem blocos de código ```json ou qualquer outro texto adicional. "
         "O JSON deve conter os campos 'label' (exatamente igual a uma das categorias acima) e 'score' (um float de confiança entre 0.0 e 1.0).\n"
         "Exemplo:\n"
         "{\"label\": \"infiltração ou umidade\", \"score\": 0.95}"
     )
 
+    from app.redis import get_redis_client
+    redis_client = get_redis_client()
+    try:
+        model_id = await redis_client.get("settings:ai:model_id")
+    except Exception as e:
+        logger.error(f"Error reading model_id from redis: {e}")
+        model_id = None
+    finally:
+        await redis_client.close()
+        
+    model_id = model_id if model_id else settings.HF_MODEL_ID
+
     payload = {
-        "model": settings.HF_MODEL_ID,
+        "model": model_id,
         "messages": [
             {
                 "role": "user",
@@ -105,8 +134,8 @@ async def classify_image(image_bytes: bytes) -> dict:
         logger.error(f"Error calling HuggingFace API: {e}")
         return await _classify_local_fallback(image_bytes)
 
-def map_severity(score: float, label: str) -> str:
-    if score < settings.HF_CONFIDENCE_THRESHOLD:
+def map_severity(score: float, label: str, confidence_threshold: float = settings.HF_CONFIDENCE_THRESHOLD) -> str:
+    if score < confidence_threshold:
         return "pending_review"
         
     label_lower = label.lower().strip()
@@ -151,6 +180,17 @@ async def process_inspection_media(inspection_id: uuid.UUID, db: AsyncSession, m
 
         classification = await classify_image(image_bytes)
         
+        from app.redis import get_redis_client
+        redis_client = get_redis_client()
+        try:
+            db_threshold = await redis_client.get("settings:ai:confidence_threshold")
+            confidence_threshold = float(db_threshold) if db_threshold is not None else settings.HF_CONFIDENCE_THRESHOLD
+        except Exception as e:
+            logger.error(f"Error reading confidence_threshold from redis: {e}")
+            confidence_threshold = settings.HF_CONFIDENCE_THRESHOLD
+        finally:
+            await redis_client.close()
+
         old_value = {
             "ai_label": inspection.ai_label,
             "ai_score": inspection.ai_score,
@@ -161,7 +201,7 @@ async def process_inspection_media(inspection_id: uuid.UUID, db: AsyncSession, m
         inspection.ai_label = classification["label"]
         inspection.ai_score = classification["score"]
         inspection.ai_raw = classification["raw"]
-        inspection.severity = map_severity(classification["score"], classification["label"])
+        inspection.severity = map_severity(classification["score"], classification["label"], confidence_threshold)
         
         new_value = {
             "ai_label": inspection.ai_label,

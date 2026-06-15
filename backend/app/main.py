@@ -3,14 +3,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, users, inspections, media, reports, geo, audit
+from app.routers import auth, users, inspections, media, reports, geo, audit, settings as settings_router
 from app.services import storage_service
+from app.database import AsyncSessionLocal
+from app.services.auth_service import create_initial_admin_if_not_exists
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Inicializa buckets no MinIO
     await storage_service.ensure_buckets_exist()
+    
+    # Inicializa o administrador padrão se necessário
+    async with AsyncSessionLocal() as db:
+        await create_initial_admin_if_not_exists(db)
+        
     yield
 
 
@@ -36,6 +43,8 @@ app.include_router(media.router, prefix="/api/media", tags=["Media"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(geo.router, prefix="/api/geo", tags=["Geo"])
 app.include_router(audit.router, prefix="/api/audit-logs", tags=["Audit Logs"])
+app.include_router(settings_router.router, prefix="/api/settings", tags=["Settings"])
+
 
 
 @app.get("/health", tags=["Health"])

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 from app.schemas.auth import TokenResponse
 from app.config import settings
@@ -154,3 +154,50 @@ async def refresh_token(refresh_token_str: str, redis_client: Redis, db: AsyncSe
 async def logout(refresh_token_str: str, redis_client: Redis) -> None:
     redis_key = f"refresh:{refresh_token_str}"
     await redis_client.delete(redis_key)
+
+
+async def create_initial_admin_if_not_exists(db: AsyncSession) -> None:
+    # Verifica se já existe qualquer usuário com perfil de administrador
+    try:
+        query = select(User).where(User.role == UserRole.admin)
+        result = await db.execute(query)
+        admin_exists = result.scalars().first()
+    except Exception as e:
+        # Se as migrações não tiverem rodado ainda, a tabela 'users' não existirá
+        print(f"⚠️ Pulando bootstrap do admin: tabelas não inicializadas ou banco inacessível ({type(e).__name__}).")
+        return
+
+    if admin_exists:
+        return
+
+    # Se não existe, cria com base nas variáveis de ambiente
+    from app.services.audit_service import log_action
+    
+    # Validações básicas de preenchimento
+    if not settings.INITIAL_ADMIN_EMAIL or not settings.INITIAL_ADMIN_PASSWORD:
+        return
+
+    hashed_password = pwd_context.hash(settings.INITIAL_ADMIN_PASSWORD)
+    
+    new_admin = User(
+        name=settings.INITIAL_ADMIN_NAME,
+        email=settings.INITIAL_ADMIN_EMAIL,
+        password=hashed_password,
+        role=UserRole.admin,
+        is_active=True
+    )
+    
+    db.add(new_admin)
+    await db.commit()
+    await db.refresh(new_admin)
+    
+    # Registra no log de auditoria
+    await log_action(
+        db, 
+        user_id=str(new_admin.id), 
+        entity="user", 
+        entity_id=str(new_admin.id), 
+        action="register_bootstrap",
+        ip="127.0.0.1"
+    )
+    print(f"🎉 Administrador de Bootstrap criado com sucesso: {new_admin.email}")

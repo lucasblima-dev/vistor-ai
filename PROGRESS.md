@@ -855,14 +855,12 @@ Sprint 7: IA (HuggingFace) + PDF (WeasyPrint)
 - Criada migration `0006_add_media_status` para adicionar a coluna `status` e o Enum `media_status_enum` na tabela `media`, corrigindo a discrepância entre o modelo SQLAlchemy e o banco de dados.
 - Implementada a variável `MINIO_EXTERNAL_ENDPOINT` no `config.py` e `.env` para resolver o problema de resolução de host (`minio`) em acessos fora do Docker (cURL, Mobile).
 - Refatorado `storage_service.py` para utilizar o endpoint externo na geração de URLs pré-assinadas (Presigned URLs), garantindo acessibilidade para o aplicativo Flutter.
-- Criado script `seed_user.py` para facilitar a criação de usuários de teste enquanto o módulo de Admin não é finalizado.
 
 ### Estado dos arquivos tocados
 
 - `backend/alembic/versions/0006_add_media_status.py` — criado.
 - `backend/app/config.py" — atualizado.
 - `backend/app/services/storage_service.py" — refatorado.
-- `backend/seed_user.py" — criado.
 - `.env` e `.env.example` — atualizados.
 
 ### Validações que passaram
@@ -1124,3 +1122,266 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 
 - Análise estática do código confirmada.
 - Endpoint segue o padrão de schemas `UserCreate` e `UserOut` já estabelecidos.
+
+## Task 31
+
+**Data:** 13/06/2026
+**Sprint:** Ajustes de Administração e Autenticação (Bootstrap & Lockout)
+**Sessão:** Implementação de Autocriação de Admin e Menu Dinâmico
+
+### O que foi feito
+
+- Configurada criação automática do usuário administrador inicial (bootstrap) via variáveis de ambiente no startup da API.
+- Adicionado tratamento de erro contra tabelas inexistentes no lifespan do FastAPI para bases limpas.
+- Desenvolvido menu de navegação dinâmico no app Flutter (BottomNavigationBar) chaveando entre Admin e Inspetor/Gestor.
+- Implementada proteção robusta contra auto-desativação e auto-rebaixamento de privilégios de administradores no backend e no frontend mobile.
+- Ocultado botão de voltar das telas administrativas quando renderizadas como abas principais.
+- Excluído o script obsoleto `seed_user.py` e ajustadas todas as menções na documentação e no `.gitignore`.
+- Atualizada documentação de setup no `README.md` e `docs/backend/GEMINI.md` explicando o fluxo de bootstrap de admin e o restart do container.
+
+### Estado dos arquivos tocados
+
+- `.env` e `.env.example` — variáveis de bootstrap adicionadas.
+- `.gitignore` — remoção de exclusão do script seed_user.
+- `README.md` — instruções de bootstrap e restart incluídas.
+- `docs/backend/GEMINI.md` — documentação de setup do admin atualizada.
+- `backend/app/config.py` — campos de Settings do admin adicionados.
+- `backend/app/main.py` — chamada de bootstrap no lifespan inserida.
+- `backend/app/routers/users.py` — validação de alteração de role do próprio usuário adicionada.
+- `backend/app/services/auth_service.py` — implementada rotina create_initial_admin_if_not_exists.
+- `mobile/lib/app/router.dart` — abas e visualizações dinâmicas baseadas na role configuradas.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — menu de gerenciamento adicionado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — botões de ação e voltar protegidos.
+- `mobile/lib/features/inspection/presentation/team_management_screen.dart` — botão de voltar protegido.
+- `mobile/lib/features/map/presentation/export_data_screen.dart` — botão de voltar protegido.
+- `backend/seed_user.py` — removido fisicamente.
+
+### Validações que passaram
+
+- Recuperação automática de lockout administrativo validada localmente.
+- Proteções de alteração de papel e desativação validadas com sucesso na API e na interface Flutter.
+- Fluxo de menus do administrador validado no aplicativo.
+
+---
+
+## Task 32
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes Finais e Correções de Bugs (Mapa & Localização Manual)
+**Sessão:** Resiliência de Mapa, Timeouts e Sugestões da Localização Manual no Mobile
+
+### O que foi feito
+
+- **Resiliência do Mapa (`map_cubit.dart` e `map_screen.dart`):**
+  - Corrigido o erro de import do `Geolocator` no `map_cubit.dart` que quebrava a inicialização e a tela do mapa.
+  - Implementado carregamento rápido do mapa priorizando `getLastKnownPosition` e com timeout reduzido de 4 segundos na posição atual para evitar que telas fiquem travadas por muito tempo se o GPS demorar.
+  - Ajustado o fallback de centralização inicial do mapa no `map_screen.dart` para Natal (RN) em vez de `(0, 0)` no oceano, além de mover a câmera assincronamente para a última posição conhecida do usuário no `initState`.
+- **Correção no Cubit de Criação (`create_inspection_cubit.dart`):**
+  - Resolvido erro de tipo do construtor de `Position` de fallback no geocoding (removido const e substituído `timestamp: null` por `timestamp: DateTime.now()`).
+- **Sugestões de Localização Manual (`create_inspection_screen.dart`):**
+  - Refatorado o popup "Manual" de endereço para exibir uma busca de endereços interativa com lista de sugestões ("estilo Uber").
+  - O popup apresenta carregamento e exibe os candidatos de endereço mais próximos do usuário, ordenados por distância.
+  - Adicionado suporte a fallbacks seguros (permitindo prosseguir com o endereço digitado mesmo se offline/sem conexão com o serviço da API do geocoding), evitando o bloqueio da criação de inspeções.
+
+### Estado dos arquivos tocados
+
+- `mobile/lib/features/map/domain/map_cubit.dart` — atualizado.
+- `mobile/lib/features/map/presentation/map_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/presentation/create_inspection_screen.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — No issues found! (Sucesso absoluto sem erros)
+
+---
+
+## Task 33
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes de Perfil, Senha e Armazenamento Nativo
+**Sessão:** Telas de Alteração de Dados de Perfil, Redefinição de Senha e Persistência Remota da Foto de Perfil
+
+### O que foi feito
+
+- **Backend (Persistência Nativa de Fotos de Perfil):**
+  - Criada nova migration no Alembic (`2f8e78c02adc_add_user_avatar_key.py`) que adiciona a coluna `avatar_key` à tabela `users` no PostgreSQL, executada com sucesso.
+  - Adicionado o bucket `"avatars"` na inicialização do MinIO em `storage_service.py`.
+  - Criado o endpoint `POST /api/users/me/avatar` em `routers/users.py` com validação de MIME type real (magic bytes) e upload da imagem para o MinIO.
+  - Atualizados os schemas `UserOut` (`app/schemas/user.py` e `app/schemas/auth.py`) e endpoints de autenticação/usuários (`/auth/me`, `/auth/register`, `/users/me`, `/users/`, `PATCH /users/{user_id}`) para gerar e retornar URLs pré-assinadas dinâmicas (`avatar_url`) da foto de perfil.
+  - Recompilado e reiniciado o container Docker `api` com a nova estrutura.
+- **Mobile (Telas Dedicadas e Integração):**
+  - Implementada a tela de redefinição de senha (`ForgotPasswordScreen`) com validação de formato de e-mail, carregamento rápido simulado de 1.5s, mensagem de sucesso e botão de retorno.
+  - Integrada a navegação para `/forgot-password` na rota pública do GoRouter e no formulário de login (`LoginForm`).
+  - Desenvolvidas telas dedicadas para edição de perfil (`EditProfileScreen`) e alteração de senha (`ChangePasswordScreen`) substituindo os antigos modais/diálogos.
+  - Atualizado o modelo `User` do Flutter para receber `avatar_url` da API e executada a regeneração do Freezed via `build_runner`.
+  - Implementado envio da foto de perfil para o backend via `AuthRepository.uploadAvatar` e `AuthCubit.uploadAvatar` utilizando requisições multipart, removendo a necessidade do workaround de cache de imagem local em `TokenStorage`.
+  - Formatado o cabeçalho da `ProfileScreen` para exibir o nome e o cargo do usuário em formato compacto `Nome | Cargo` abaixo da foto de perfil e sem distintivos repetidos.
+  - Atualizada a linha de versão do app para abrir um pop-up temático (`AlertDialog`) com detalhes do app em vez de expor o número da versão na própria linha.
+
+### Estado dos arquivos tocados
+
+- `backend/app/models/user.py` — atualizado.
+- `backend/alembic/versions/20260614_2f8e78c02adc_add_user_avatar_key.py` — criado.
+- `backend/app/schemas/user.py` — atualizado.
+- `backend/app/schemas/auth.py` — atualizado.
+- `backend/app/services/storage_service.py` — atualizado.
+- `backend/app/routers/users.py` — atualizado.
+- `backend/app/routers/auth.py` — atualizado.
+- `mobile/lib/shared/models/user.dart` — atualizado.
+- `mobile/lib/core/api/endpoints.dart` — atualizado.
+- `mobile/lib/core/api/token_storage.dart` — atualizado.
+- `mobile/lib/features/auth/data/auth_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/auth_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/widgets/login_form.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/forgot_password_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/edit_profile_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/change_password_screen.dart` — criado.
+- `mobile/lib/features/auth/presentation/profile_screen.dart` — atualizado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `pytest` — Todos os 42 testes do backend executados e aprovados.
+- `flutter analyze` — Sucesso absoluto sem erros nem avisos de lint.
+- `flutter test` — Todos os 21 testes mobile executados e aprovados.
+
+---
+
+## Task 34
+
+**Data:** 14/06/2026
+
+**Sprint:** Customização de Abas Dinâmicas por Role e Cadastro de Usuários por Admin
+**Sessão:** Roteamento de Abas Customizado para Gestor/Admin, Tela de Logs Standalone, Ajustes de IA e Fluxo Integrado de Criação de Usuários
+
+### O que foi feito
+
+- **Backend (Endpoint Restrito de Criação de Usuário):**
+  - Implementado o endpoint seguro `POST /api/users/` em `routers/users.py`, restrito a usuários com privilégio de administrador (`require_role(["admin"])`).
+  - O endpoint realiza verificação de duplicidade de e-mail e chama o motor de persistência padrão, gerando uma entrada de rastreabilidade no log de auditoria com a ação `'user_created'`.
+  - Criada suíte de testes `test_users.py` no backend validando os fluxos com sucesso, bloqueio de permissão de não-administradores (retornando HTTP 403) e erro de email duplicado (retornando HTTP 409).
+- **Mobile (Roteamento Dinâmico por Role, Configurações de IA e Cadastro de Usuários):**
+  - Desenvolvida a tela independente `AuditLogsScreen` (`lib/features/auth/presentation/audit_logs_screen.dart`) portando o histórico de auditoria com formatação e parsing resiliente contra erros de tipo de índice em tempo de execução.
+  - Refatorada a tela de configurações do sistema (`AdminSettingsScreen`) para remover o tab bar e o controlador de abas, transformando-a na tela exclusiva de "Configurações de IA".
+  - Integrada a funcionalidade de criação no `UserRepository` e no `UserManagementCubit.createUser`.
+  - Atualizada a interface de gerenciamento de usuários (`UserManagementScreen`) adicionando um `FloatingActionButton` que abre o formulário de cadastro com validação de formato e seleção do cargo (Admin, Gestor, Inspetor).
+  - Reconfigurado o GoRouter e o `AppScaffold` em `router.dart` de modo a mapear de forma dinâmica as abas inferiores e destinos baseando-se no cargo do usuário logado:
+    - **Inspector:** Inspeções | Mapa | Laudos | Perfil
+    - **Gestor:** Inspeções | Exportar | Equipe | Perfil
+    - **Admin:** Logs | IA | Usuários | Perfil
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/users.py` — atualizado.
+- `backend/app/tests/test_users.py` — criado.
+- `mobile/lib/features/auth/data/user_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/user_management_screen.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/audit_logs_screen.dart` — criado.
+- `mobile/lib/app/router.dart` — atualizado.
+
+### Validações que passaram
+
+- `pytest` — Todos os 45 testes do backend aprovados.
+- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- `flutter test` — Todos os 21 testes mobile aprovados.
+
+---
+
+## Task 35
+
+**Data:** 14/06/2026
+
+**Sprint:** Estabilização e Tratamento Resiliente de Erros de Conexão/Deserialização
+**Sessão:** Paginador do Log de Auditoria e Resiliência no IP Address
+
+### O que foi feito
+
+- **Backend (Paginação de logs de auditoria & IP Address):**
+  - Adicionado suporte ao parâmetro query `offset: int = Query(0, ge=0)` na rota `/api/audit-logs/` em `backend/app/routers/audit.py`, aplicando-o na query de banco de dados para suportar lazy loading/paginação de logs no frontend.
+  - Mantido `@field_validator('ip_address', mode='before')` no schema Pydantic `AuditLogOut` (`app/schemas/audit_log.py`) para converter automaticamente instâncias de `IPv4Address` e `IPv6Address` para string, prevenindo falhas de serialização no banco de dados.
+- **Mobile (Logs de Auditoria Paginados de 5 em 5):**
+  - Removido o ícone de engrenagem (configs) do topo da tela `AuditLogsScreen`, já que existe uma aba dedicada às configurações de IA.
+  - Atualizado `AdminRepository.getAuditLogs` para aceitar parâmetros `limit` e `offset`.
+  - Atualizado `AdminSettingsState` e `AdminSettingsCubit` para gerenciar a paginação usando `isLoadingMore` e `hasMore`.
+  - Atualizada a `AuditLogsScreen` para exibir um botão "Carregar mais 5 logs" no fim da lista quando `state.hasMore` for verdadeiro, ou um `CircularProgressIndicator` se `state.isLoadingMore` for verdadeiro, prevenindo sobrecarga desnecessária na busca do banco.
+- **Mobile (Prevenção de TypeError em Exceções de API):**
+  - Implementada a extensão `DioExceptionExtension` com o método helper `getErrorMessage()` em `core/api/api_client.dart` para parsear as mensagens de erro de forma resiliente, impedindo o erro fatal `type 'String' is not a subtype of type 'int' of index`.
+  - Atualizados os repositórios (`admin_repository.dart`, `auth_repository.dart`, `user_repository.dart`, `inspection_repository.dart`) para consumirem a extensão.
+
+### Estado dos arquivos tocados
+
+- `backend/app/routers/audit.py` — atualizado.
+- `backend/app/schemas/audit_log.py` — atualizado.
+- `mobile/lib/core/api/api_client.dart` — atualizado.
+- `mobile/lib/features/auth/data/admin_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/auth_repository.dart` — atualizado.
+- `mobile/lib/features/auth/data/user_repository.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_state.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/presentation/audit_logs_screen.dart` — atualizado.
+- `mobile/lib/features/inspection/data/inspection_repository.dart` — atualizado.
+
+### Validações que passaram
+
+- `pytest` — Todos os 45 testes do backend aprovados.
+- `flutter analyze` — Sucesso absoluto sem erros estáticos.
+- `flutter test` — Todos os 21 testes mobile aprovados.
+
+---
+
+## Task 36
+
+**Data:** 14/06/2026
+
+**Sprint:** Ajustes Finais, Logo e Nome do Aplicativo
+**Sessão:** Configuração da Identidade Visual do Launcher (Android/Web) e Nome Comercial do App
+
+### O que foi feito
+
+- **Mobile (Logo SVG e PNG oficial):**
+  - Desenvolvida a logo oficial da aplicação em vetor SVG (`assets/images/app_logo.svg`) contendo o gradiente premium de fundo, o ícone de localização `map-pin` e os brilhos `sparkles` em dourado, replicando fielmente o widget `AppLogo` de login.
+  - Convertido o SVG para uma imagem de alta resolução em PNG (`1024x1024` pixels) em `assets/images/app_logo.png` para uso como origem dos launchers.
+- **Mobile (Geração de Ícones Launcher):**
+  - Adicionado e configurado o pacote `flutter_launcher_icons` no `pubspec.yaml` sob `dev_dependencies` e criado o arquivo de configuração de build `flutter_launcher_icons.yaml`.
+  - Executado o gerador de ícones para as plataformas Android e Web (gerando automaticamente todos os mipmaps adaptativos e ícones da web), mantendo o iOS desligado devido à estrutura de pastas do repositório.
+- **Mobile (Nome Oficial do Aplicativo - Vistor AI):**
+  - Renomeado o label do aplicativo para "Vistor AI" no manifesto do Android (`android/app/src/main/AndroidManifest.xml`).
+  - Atualizado o título da aplicação, tag meta e descrição no arquivo web `index.html` e também no manifesto do PWA `manifest.json`, unificando a identidade visual sob a marca comercial.
+- **Mobile (Reatividade dos Switches de Preferência):**
+  - Declaradas as variáveis de estado locais em `_ProfileScreenState` para representar as preferências do usuário, vinculando-as aos switches da `ProfileScreen` e permitindo que sejam ligados/desligados de forma reativa.
+- **Mobile (Melhoria na Inicialização do Mapa):**
+  - Refatorada a inicialização do mapa em `MapScreen` para obter ativamente a localização real em tempo real do GPS. A câmera se desloca automaticamente para a posição real do usuário e a busca no cubit é disparada na coordenada exata, exibindo as inspeções locais de imediato.
+- **Mobile (Tratamento e Sanitização de Erros Técnicos):**
+  - Criada a classe utilitária centralizada `ErrorHandler` (`lib/core/utils/error_handler.dart`) para higienizar exceções locais, erros de tipagem/runtime do Dart (ex: `TypeError`, `FormatException`) e erros do servidor (como problemas de MinIO, S3 ou banco de dados) antes de serem exibidos na interface para o usuário final.
+  - Aprimorada a extensão `DioExceptionExtension` no `api_client.dart` para interceptar respostas 500+ e mensagens que contenham palavras-chave técnicas de infraestrutura, mascarando-as de forma automática e amigável.
+  - Refatorados todos os Cubits (`UserManagementCubit`, `AdminSettingsCubit`, `CreateInspectionCubit`, `InspectionCubit`, `InspectionDetailCubit`, `TeamManagementCubit` e `ReportCubit`) para utilizarem a rotina do `ErrorHandler` no mapeamento de estados de erro.
+
+### Estado dos arquivos tocados
+
+- `mobile/assets/images/app_logo.svg` — criado.
+- `mobile/assets/images/app_logo.png` — criado.
+- `mobile/pubspec.yaml` — atualizado.
+- `mobile/flutter_launcher_icons.yaml` — criado.
+- `mobile/android/app/src/main/AndroidManifest.xml` — atualizado.
+- `mobile/web/index.html` — atualizado.
+- `mobile/web/manifest.json` — atualizado.
+- `mobile/lib/core/utils/error_handler.dart` — criado.
+- `mobile/lib/core/api/api_client.dart` — atualizado.
+- `mobile/lib/features/auth/domain/user_management_cubit.dart` — atualizado.
+- `mobile/lib/features/auth/domain/admin_settings_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/create_inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/inspection_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/inspection_detail_cubit.dart` — atualizado.
+- `mobile/lib/features/inspection/domain/team_management_cubit.dart` — atualizado.
+- `mobile/lib/features/report/presentation/cubit/report_cubit.dart` — atualizado.
+
+### Validações que passaram
+
+- `flutter analyze` — Sucesso absoluto sem erros estáticos importantes.
+- Execução do build do launcher — Geração de assets de launcher finalizada com sucesso.
+
+---

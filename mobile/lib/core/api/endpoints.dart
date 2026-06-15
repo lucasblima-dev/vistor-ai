@@ -6,6 +6,9 @@ class AppEndpoints {
   static const String logout = '/auth/logout';
   static const String me = '/auth/me';
   static const String fcmToken = '/users/me/fcm-token';
+  static const String updateMe = '/users/me';
+  static const String changePassword = '/users/me/change-password';
+  static const String uploadAvatar = '/users/me/avatar';
 
   // Inspections
   static const String inspections = '/inspections/';
@@ -17,6 +20,7 @@ class AppEndpoints {
   // Geo
   static const String nearby = '/geo/nearby';
   static const String export = '/geo/export';
+  static const String heatmap = '/geo/heatmap';
 
   // Media
   static const String presign = '/media/presign';
@@ -34,4 +38,11 @@ class AppEndpoints {
 
   // Team
   static const String teamQueue = '/team/queue';
+
+  // Settings
+  static const String aiSettings = '/settings/ai';
+
+  // Audit Logs
+  static const String auditLogs = '/audit-logs/';
 }
+

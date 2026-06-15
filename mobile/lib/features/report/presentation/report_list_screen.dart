@@ -21,9 +21,19 @@ class ReportListScreen extends StatefulWidget {
   State<ReportListScreen> createState() => _ReportListScreenState();
 }
 
+String formatPtBrDateTime(DateTime dateTime) {
+  final ptBrTime = dateTime.toUtc().subtract(const Duration(hours: 3));
+  return '${DateFormat('dd/MM/yyyy HH:mm').format(ptBrTime)} BRT';
+}
+
+String formatPtBrDateOnly(DateTime dateTime) {
+  final ptBrTime = dateTime.toUtc().subtract(const Duration(hours: 3));
+  return DateFormat('dd/MM/yyyy').format(ptBrTime);
+}
+
 class _ReportListScreenState extends State<ReportListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>('');
 
   @override
   void initState() {
@@ -34,6 +44,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchQueryNotifier.dispose();
     super.dispose();
   }
 
@@ -77,11 +88,43 @@ class _ReportListScreenState extends State<ReportListScreen> {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: TextField(
+              key: const ValueKey('report_search_input'),
               controller: _searchController,
-              onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+              onChanged: (value) => _searchQueryNotifier.value = value.toLowerCase(),
               decoration: InputDecoration(
-                hintText: 'Buscar por ID ou data...',
+                hintText: 'Buscar por título da inspeção ou data...',
                 prefixIcon: const Icon(LucideIcons.search, size: 20),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(LucideIcons.calendar, size: 20, color: AppColors.primary),
+                      onPressed: () async {
+                        final selectedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                        );
+                        if (selectedDate != null) {
+                          final formattedDate = formatPtBrDateOnly(selectedDate);
+                          _searchController.text = formattedDate;
+                          _searchQueryNotifier.value = formattedDate;
+                        }
+                      },
+                      tooltip: 'Listar por data',
+                    ),
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(LucideIcons.x, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchQueryNotifier.value = '';
+                          setState(() {});
+                        },
+                      ),
+                  ],
+                ),
                 filled: true,
                 fillColor: Theme.of(context).cardColor,
                 border: OutlineInputBorder(
@@ -92,36 +135,46 @@ class _ReportListScreenState extends State<ReportListScreen> {
             ),
           ),
           Expanded(
-            child: BlocBuilder<ReportCubit, ReportState>(
-              builder: (context, state) {
-                return state.when(
-                  initial: () => const SizedBox.shrink(),
-                  loading: () => const AppLoadingState(message: 'Carregando laudos...'),
-                  downloading: (progress) => AppLoadingState(
-                    message: 'Baixando laudo... ${(progress * 100).toStringAsFixed(0)}%',
-                  ),
-                  downloaded: (filePath) => const AppLoadingState(message: 'Laudo pronto!'),
-                  error: (msg) => AppErrorState(
-                    message: msg,
-                    onRetry: () => context.read<ReportCubit>().loadAll(),
-                  ),
-                  loaded: (reports) {
-                    final filtered = reports.where((r) {
-                      return r.id.toLowerCase().contains(_searchQuery) ||
-                          DateFormat('dd/MM/yyyy').format(r.createdAt).contains(_searchQuery);
-                    }).toList();
+            child: ValueListenableBuilder<String>(
+              valueListenable: _searchQueryNotifier,
+              builder: (context, searchQuery, child) {
+                return BlocBuilder<ReportCubit, ReportState>(
+                  builder: (context, state) {
+                    return state.when(
+                      initial: () => const SizedBox.shrink(),
+                      loading: () => const AppLoadingState(message: 'Carregando laudos...'),
+                      downloading: (progress) => AppLoadingState(
+                        message: 'Baixando laudo... ${(progress * 100).toStringAsFixed(0)}%',
+                      ),
+                      downloaded: (filePath) => const AppLoadingState(message: 'Laudo pronto!'),
+                      error: (msg) => AppErrorState(
+                        message: msg,
+                        onRetry: () => context.read<ReportCubit>().loadAll(),
+                      ),
+                      loaded: (reports) {
+                        // Sort descending (stack)
+                        final sortedReports = List<Report>.from(reports)
+                          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                        
+                        final filtered = sortedReports.where((r) {
+                          final titleMatch = r.inspectionTitle?.toLowerCase().contains(searchQuery) ?? false;
+                          final dateMatch = formatPtBrDateOnly(r.createdAt).contains(searchQuery);
+                          return titleMatch || dateMatch;
+                        }).toList();
 
-                    if (filtered.isEmpty) {
-                      return const AppEmptyState(
-                        title: 'Nenhum laudo encontrado',
-                        subtitle: 'Os laudos gerados aparecerão aqui.',
-                      );
-                    }
+                        if (filtered.isEmpty) {
+                          return const AppEmptyState(
+                            title: 'Nenhum laudo encontrado',
+                            subtitle: 'Os laudos gerados aparecerão aqui.',
+                          );
+                        }
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) => _ReportCard(report: filtered[index]),
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) => _ReportCard(report: filtered[index]),
+                        );
+                      },
                     );
                   },
                 );
@@ -169,11 +222,13 @@ class _ReportCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Laudo #${report.id.substring(0, 8)}',
+                          report.inspectionTitle ?? 'Laudo #${report.id.substring(0, 8)}',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          DateFormat('dd/MM/yyyy HH:mm').format(report.createdAt),
+                          formatPtBrDateTime(report.createdAt),
                           style: const TextStyle(color: AppColors.offline, fontSize: 12),
                         ),
                       ],
@@ -208,7 +263,7 @@ class _ReportCard extends StatelessWidget {
                   const Icon(LucideIcons.user, size: 14, color: AppColors.offline),
                   const SizedBox(width: 4),
                   Text(
-                    'Gerado por: ${report.generatedBy.substring(0, 8)}',
+                    'Gerado por: ${report.generatorName ?? report.generatedBy.substring(0, 8)}',
                     style: const TextStyle(color: AppColors.offline, fontSize: 12),
                   ),
                   const Spacer(),

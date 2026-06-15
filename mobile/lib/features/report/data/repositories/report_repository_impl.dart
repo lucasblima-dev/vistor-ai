@@ -15,10 +15,15 @@ class ReportRepositoryImpl implements ReportRepository {
     const delay = Duration(seconds: 2);
 
     // Initial trigger
-    await _apiClient.post(
+    final triggerResponse = await _apiClient.post(
       AppEndpoints.generateReport,
       data: {'inspection_id': inspectionId},
     );
+    if (triggerResponse.statusCode != 200 && triggerResponse.statusCode != 202 && triggerResponse.statusCode != 201) {
+      throw Exception(triggerResponse.data is Map && triggerResponse.data.containsKey('detail') 
+          ? triggerResponse.data['detail'] 
+          : 'Erro ao iniciar geração do laudo (${triggerResponse.statusCode})');
+    }
 
     // Polling
     for (int i = 0; i < maxAttempts; i++) {
@@ -28,6 +33,12 @@ class ReportRepositoryImpl implements ReportRepository {
         AppEndpoints.generateReport,
         data: {'inspection_id': inspectionId},
       );
+
+      if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 202) {
+        throw Exception(response.data is Map && response.data.containsKey('detail') 
+            ? response.data['detail'] 
+            : 'Erro durante geração do laudo (${response.statusCode})');
+      }
 
       final data = response.data as Map<String, dynamic>;
       
@@ -43,13 +54,23 @@ class ReportRepositoryImpl implements ReportRepository {
   @override
   Future<Report> getById(String id) async {
     final response = await _apiClient.get(AppEndpoints.reportDetail(id));
+    if (response.statusCode != 200 || response.data == null) {
+      throw Exception(response.data is Map && response.data.containsKey('detail') 
+          ? response.data['detail'] 
+          : 'Erro ao carregar detalhes do laudo (${response.statusCode})');
+    }
     return Report.fromJson(response.data);
   }
 
   @override
   Future<List<Report>> getAll() async {
     final response = await _apiClient.get('/reports/');
-    final List<dynamic> data = response.data;
+    if (response.statusCode != 200 || response.data == null) {
+      throw Exception(response.data is Map && response.data.containsKey('detail') 
+          ? response.data['detail'] 
+          : 'Erro ao carregar laudos (${response.statusCode})');
+    }
+    final List<dynamic> data = response.data is List ? response.data : [];
     return data.map((json) => Report.fromJson(json)).toList();
   }
 }

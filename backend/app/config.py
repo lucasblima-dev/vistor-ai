@@ -6,6 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     DATABASE_URL: str
 
+    # Admin Inicial Bootstrap
+    INITIAL_ADMIN_NAME: str = "Admin Inicial"
+    INITIAL_ADMIN_EMAIL: str = "admin@vistor.ai"
+    INITIAL_ADMIN_PASSWORD: str = "admin12345"
+
     # MinIO
     MINIO_ENDPOINT: str
     MINIO_EXTERNAL_ENDPOINT: str = "http://localhost:9000"

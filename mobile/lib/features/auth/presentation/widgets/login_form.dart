@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:vistor_ai_mobile/app/router.dart';
 import 'package:vistor_ai_mobile/app/theme.dart';
 
 class LoginForm extends StatefulWidget {
@@ -114,7 +116,7 @@ class _LoginFormState extends State<LoginForm> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: widget.isLoading ? null : () {},
+              onPressed: widget.isLoading ? null : () => context.push(AppRoutes.forgotPassword),
               child: const Text(
                 'Esqueceu a senha?',
                 style: TextStyle(

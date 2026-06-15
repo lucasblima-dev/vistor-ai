@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Laudo de Inspeção Técnica - {{ inspection.id }}</title>
+    <title>Laudo: {{ inspection.title }}</title>
     <style>
         @page {
             margin: 2cm;
@@ -100,8 +100,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>Laudo de Inspeção Técnica</h1>
-        <p>Vistor AI - Sistema de Inspeção Inteligente</p>
+        <h1>Laudo: {{ inspection.title }}</h1>
+        <p>Gerado por: {{ generator_name }}</p>
     </div>
 
     <div class="section">
@@ -139,7 +139,7 @@
             </div>
             <div class="grid-row">
                 <div class="grid-cell label">Precisão GPS:</div>
-                <div class="grid-cell">{{ inspection.gps_accuracy }}m</div>
+                <div class="grid-cell">Raio de {{ "%.1f"|format(inspection.gps_accuracy) if inspection.gps_accuracy else '50.0' }}m</div>
             </div>
             {% if inspection.address %}
             <div class="grid-row">
