@@ -1219,5 +1219,3 @@ foca exclusivamente na camada `mobile`. Para visualizar o `backend`, acesse o [`
 - Execução do build do launcher — Geração de assets de launcher finalizada com sucesso.
 
 ---
-
-

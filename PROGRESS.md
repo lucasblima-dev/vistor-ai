@@ -1385,6 +1385,3 @@ Backend concluído e estabilizado. Iniciar Sprint 1 do módulo **Mobile (Flutter
 - Execução do build do launcher — Geração de assets de launcher finalizada com sucesso.
 
 ---
-
-
-

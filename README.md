@@ -98,6 +98,12 @@ O ecossistema completo de suporte do Vistor AI (API FastAPI, Banco de Dados Post
 
 Após a conclusão destes passos, a API estará acessível em `http://localhost:8000` e a documentação interativa Swagger estará disponível em `http://localhost:8000/docs`.
 
+> [!IMPORTANT]
+> **E o aplicativo Mobile?**
+> A execução via Docker Compose inicializa e configura apenas o backend e os serviços de apoio (Banco de dados PostGIS, Cache Redis e Armazenamento MinIO S3). Ela **não** inicializa nem prepara o aplicativo móvel Flutter automaticamente.
+>
+> Para configurar, compilar e rodar o aplicativo mobile em seu emulador ou dispositivo físico, siga as instruções detalhadas em [README do Mobile (mobile/README.md)](file:///C:/Users/lukin/OneDrive/Documentos/vistor-ai/mobile/README.md).
+
 ---
 
 ## Documentação de Referência
