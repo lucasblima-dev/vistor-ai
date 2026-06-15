@@ -166,6 +166,10 @@ class CreateInspectionCubit extends Cubit<CreateInspectionState> {
       if (currentPos == null) {
         try {
           currentPos = await Geolocator.getLastKnownPosition();
+          currentPos ??= await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 2),
+          );
         } catch (_) {}
       }
 

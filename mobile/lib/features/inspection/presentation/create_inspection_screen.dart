@@ -50,6 +50,11 @@ class _CreateInspectionViewState extends State<_CreateInspectionView> with Singl
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
+
+    // Captura o GPS de imediato na abertura da tela para preencher a localização
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CreateInspectionCubit>().captureGps();
+    });
   }
 
   @override
@@ -548,6 +553,10 @@ class _ManualLocationDialogState extends State<_ManualLocationDialog> {
       if (currentPos == null) {
         try {
           currentPos = await Geolocator.getLastKnownPosition();
+          currentPos ??= await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 2),
+          );
         } catch (_) {}
       }
 
