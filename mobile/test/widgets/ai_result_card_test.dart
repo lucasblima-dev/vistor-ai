@@ -20,8 +20,9 @@ void main() {
       ),
     );
 
-    expect(find.text('Classificação IA'), findsOneWidget);
-    expect(find.text('Classificação incerta'), findsNothing);
+    expect(find.text('Análise da IA'), findsOneWidget);
+    expect(find.text('Confiança: 85%'), findsOneWidget);
+    expect(find.text('Confiança baixa. Por favor, corrija a classificação manualmente.'), findsNothing);
 
     final confirmBtnFinder = find.widgetWithText(ElevatedButton, 'Confirmar');
     expect(confirmBtnFinder, findsOneWidget);
@@ -52,8 +53,9 @@ void main() {
       ),
     );
 
-    expect(find.text('Classificação incerta'), findsOneWidget);
-    expect(find.text('Classificação IA'), findsNothing);
+    expect(find.text('Análise da IA'), findsOneWidget);
+    expect(find.text('Confiança: 45%'), findsOneWidget);
+    expect(find.text('Confiança baixa. Por favor, corrija a classificação manualmente.'), findsOneWidget);
 
     final confirmBtnFinder = find.widgetWithText(ElevatedButton, 'Confirmar');
     expect(confirmBtnFinder, findsOneWidget);
