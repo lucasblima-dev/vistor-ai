@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_detail_state.dart';
 import 'package:vistor_ai_mobile/shared/models/inspection.dart';
@@ -24,7 +25,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
         history: history,
       ));
     } catch (e) {
-      emit(InspectionDetailState.error(e.toString()));
+      emit(InspectionDetailState.error(ErrorHandler.handle(e, 'Não foi possível carregar os detalhes da inspeção.')));
     }
   }
 
@@ -50,7 +51,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdatingStatus: false,
-        error: e.toString(),
+        error: ErrorHandler.handle(e, 'Não foi possível atualizar o status.'),
       ));
     }
   }
@@ -75,7 +76,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdatingStatus: false,
-        error: e.toString(),
+        error: ErrorHandler.handle(e, 'Não foi possível confirmar a classificação.'),
       ));
     }
   }
@@ -103,7 +104,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdatingStatus: false,
-        error: e.toString(),
+        error: ErrorHandler.handle(e, 'Não foi possível alterar a classificação.'),
       ));
     }
   }
@@ -122,7 +123,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
     } catch (e) {
       emit(currentState.copyWith(
         isGeneratingReport: false,
-        error: e.toString(),
+        error: ErrorHandler.handle(e, 'Não foi possível solicitar a geração do laudo técnico.'),
       ));
     }
   }
@@ -146,7 +147,7 @@ class InspectionDetailCubit extends Cubit<InspectionDetailState> {
     } catch (e) {
       emit(currentState.copyWith(
         isReevaluating: false,
-        error: e.toString(),
+        error: ErrorHandler.handle(e, 'Erro ao solicitar reavaliação da IA.'),
       ));
     }
   }

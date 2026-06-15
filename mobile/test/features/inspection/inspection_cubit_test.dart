@@ -66,7 +66,7 @@ void main() {
       act: (cubit) => cubit.load(),
       expect: () => [
         const InspectionState.loading(),
-        const InspectionState.error('Exception: Erro ao carregar'),
+        const InspectionState.error('Erro ao carregar'),
       ],
     );
   });

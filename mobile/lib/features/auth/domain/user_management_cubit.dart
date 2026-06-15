@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/auth/data/user_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/domain/user_management_state.dart';
 import 'package:vistor_ai_mobile/shared/models/user.dart';
@@ -17,7 +18,7 @@ class UserManagementCubit extends Cubit<UserManagementState> {
       final users = await _userRepository.getAll();
       emit(UserManagementState.loaded(users: users));
     } catch (e) {
-      emit(UserManagementState.error(e.toString()));
+      emit(UserManagementState.error(ErrorHandler.handle(e, 'Não foi possível carregar os usuários.')));
     }
   }
 
@@ -46,7 +47,7 @@ class UserManagementCubit extends Cubit<UserManagementState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdating: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: ErrorHandler.handle(e, 'Não foi possível atualizar o cargo do usuário.'),
       ));
       return false;
     }
@@ -68,7 +69,7 @@ class UserManagementCubit extends Cubit<UserManagementState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdating: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: ErrorHandler.handle(e, 'Não foi possível alterar o status do usuário.'),
       ));
       return false;
     }
@@ -100,7 +101,7 @@ class UserManagementCubit extends Cubit<UserManagementState> {
     } catch (e) {
       emit(currentState.copyWith(
         isUpdating: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: ErrorHandler.handle(e, 'Não foi possível criar o usuário.'),
       ));
       return false;
     }

@@ -70,33 +70,45 @@ O ecossistema completo de suporte do Vistor AI (API FastAPI, Banco de Dados Post
 ### Instruções de Inicialização
 
 1. **Clonar o repositório e configurar variáveis de ambiente:**
+
    ```bash
-   git clone https://github.com/seu-usuario/vistor-ai.git
+   git clone https://github.com/lucasblima-dev/vistor-ai.git
    cd vistor-ai
    cp .env.example .env
    ```
 
 2. **Iniciar os containers em segundo plano:**
+
    ```bash
    docker compose up -d
    ```
+
    *Este comando baixa as imagens necessárias e inicia o banco de dados PostgreSQL/PostGIS, o cache Redis, o storage MinIO S3 e a API FastAPI.*
 
 3. **Executar as migrations do banco de dados (Alembic):**
+
    ```bash
    docker compose exec api alembic upgrade head
    ```
 
- 4. **Administrador Inicial (Bootstrap):**
+4. **Administrador Inicial (Bootstrap):**
     O backend tenta criar o usuário administrador automaticamente na inicialização. Em bancos novos/zerados, as tabelas não existem na primeira subida, portanto, **após executar as migrações (Passo 3)**, reinicie o container da API para efetivar a criação do admin padrão:
+
     ```bash
     docker compose restart api
     ```
-    * Credenciais padrão de desenvolvimento (lidas do `.env` do backend):
-      * **E-mail:** `admin@vistor.ai`
-      * **Senha:** `password123`
+
+    - Credenciais padrão de desenvolvimento (lidas do `.env` do backend):
+      - **E-mail:** `admin@vistor.ai`
+      - **Senha:** `password123`
 
 Após a conclusão destes passos, a API estará acessível em `http://localhost:8000` e a documentação interativa Swagger estará disponível em `http://localhost:8000/docs`.
+
+> [!IMPORTANT]
+> **E o aplicativo Mobile?**
+> A execução via Docker Compose inicializa e configura apenas o backend e os serviços de apoio (Banco de dados PostGIS, Cache Redis e Armazenamento MinIO S3). Ela **não** inicializa nem prepara o aplicativo móvel Flutter automaticamente.
+>
+> Para configurar, compilar e rodar o aplicativo mobile em seu emulador ou dispositivo físico, siga as instruções detalhadas em [README do Mobile (mobile/README.md)](vistor-ai/mobile/README.md).
 
 ---
 

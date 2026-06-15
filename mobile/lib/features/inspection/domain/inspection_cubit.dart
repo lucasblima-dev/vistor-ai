@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/inspection_state.dart';
 
@@ -10,7 +11,7 @@ class InspectionCubit extends Cubit<InspectionState> {
   InspectionCubit({
     required InspectionRepository repository,
   })  : _repository = repository,
-        super(const InspectionState.initial());
+      super(const InspectionState.initial());
 
   Future<void> load() async {
     emit(const InspectionState.loading());
@@ -25,7 +26,7 @@ class InspectionCubit extends Cubit<InspectionState> {
         emit(InspectionState.loaded(inspections));
       }
     } catch (e) {
-      emit(InspectionState.error(e.toString()));
+      emit(InspectionState.error(ErrorHandler.handle(e, 'Não foi possível carregar as inspeções.')));
     }
   }
 

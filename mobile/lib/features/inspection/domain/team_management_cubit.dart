@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vistor_ai_mobile/core/utils/error_handler.dart';
 import 'package:vistor_ai_mobile/features/inspection/data/inspection_repository.dart';
 import 'package:vistor_ai_mobile/features/auth/data/user_repository.dart';
 import 'package:vistor_ai_mobile/features/inspection/domain/team_management_state.dart';
@@ -29,7 +30,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
         activeInspectors: activeInspectors,
       ));
     } catch (e) {
-      emit(TeamManagementState.error(e.toString()));
+      emit(TeamManagementState.error(ErrorHandler.handle(e, 'Erro ao carregar fila de equipe.')));
     }
   }
 
@@ -54,7 +55,7 @@ class TeamManagementCubit extends Cubit<TeamManagementState> {
     } catch (e) {
       emit(currentState.copyWith(
         isAssigning: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: ErrorHandler.handle(e, 'Erro ao atribuir inspetor.'),
       ));
       return false;
     }

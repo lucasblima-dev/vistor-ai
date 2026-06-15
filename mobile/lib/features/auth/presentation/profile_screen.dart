@@ -19,6 +19,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _criticalAlerts = true;
+  bool _dailySummary = false;
+  bool _assignedInspection = true;
 
   @override
   void initState() {
@@ -139,24 +142,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: LucideIcons.bell,
                       title: "Alertas críticos",
                       subtitle: "Notificações push imediatas",
-                      value: true,
-                      onChanged: (v) {},
+                      value: _criticalAlerts,
+                      onChanged: (v) {
+                        setState(() {
+                          _criticalAlerts = v;
+                        });
+                      },
                     ),
                     const Divider(),
                     _SwitchTile(
                       icon: LucideIcons.clipboardList,
                       title: "Resumo diário",
                       subtitle: "Relatório via email",
-                      value: false,
-                      onChanged: (v) {},
+                      value: _dailySummary,
+                      onChanged: (v) {
+                        setState(() {
+                          _dailySummary = v;
+                        });
+                      },
                     ),
                     const Divider(),
                     _SwitchTile(
                       icon: LucideIcons.bellRing,
                       title: "Inspeção atribuída",
                       subtitle: "Avisar ao receber tarefa",
-                      value: true,
-                      onChanged: (v) {},
+                      value: _assignedInspection,
+                      onChanged: (v) {
+                        setState(() {
+                          _assignedInspection = v;
+                        });
+                      },
                     ),
                   ],
                 ),
