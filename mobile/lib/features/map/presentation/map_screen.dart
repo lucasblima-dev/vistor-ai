@@ -27,31 +27,47 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   final DraggableScrollableController _sheetController = DraggableScrollableController();
+  LatLng? _userLocation;
+  bool _hasCenteredOnUser = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<MapCubit>().loadMap();
-    _centerOnUser();
+    _initLocationAndLoad();
   }
 
-  Future<void> _centerOnUser() async {
+  Future<void> _initLocationAndLoad() async {
+    LatLng? location;
     try {
       Position? position = await Geolocator.getLastKnownPosition();
       position ??= await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 4),
       );
-      
-      if (mounted) {
-        _mapController.move(LatLng(position.latitude, position.longitude), 13);
-        // Atualiza a busca no cubit para a localização real identificada
-        context.read<MapCubit>().loadMap(
-          lat: position.latitude,
-          lon: position.longitude,
-        );
+      location = LatLng(position.latitude, position.longitude);
+    } catch (_) {
+      // Ignora erro de GPS e mantém location nulo para fallback
+    }
+
+    if (mounted) {
+      setState(() {
+        _userLocation = location;
+      });
+
+      // Carrega o mapa com a localização real obtida (ou fallback interno do Cubit)
+      context.read<MapCubit>().loadMap(
+        lat: location?.latitude,
+        lon: location?.longitude,
+      );
+
+      // Tenta centrar no mapa se o controller já estiver pronto
+      if (location != null && !_hasCenteredOnUser) {
+        try {
+          _mapController.move(location, 13);
+          _hasCenteredOnUser = true;
+        } catch (_) {}
       }
-    } catch (_) {}
+    }
   }
 
   @override
@@ -81,10 +97,13 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMapStack(BuildContext context, MapData data) {
-    // Definimos o centro inicial do mapa com base na primeira inspeção ou Natal de fallback
-    final center = data.inspections.isNotEmpty 
+    // Definimos o centro inicial do mapa:
+    // 1. Localização atual do usuário identificada pelo GPS
+    // 2. Se não houver, a primeira inspeção na lista
+    // 3. Fallback final: Natal
+    final center = _userLocation ?? (data.inspections.isNotEmpty 
         ? LatLng(data.inspections.first.lat, data.inspections.first.lon)
-        : const LatLng(-5.79448, -35.2110);
+        : const LatLng(-5.79448, -35.2110));
 
     final markers = data.inspections.map((insp) {
       return Marker(
@@ -104,6 +123,12 @@ class _MapScreenState extends State<MapScreen> {
             initialZoom: 13,
             maxZoom: 18,
             minZoom: 3,
+            onMapReady: () {
+              if (_userLocation != null && !_hasCenteredOnUser) {
+                _mapController.move(_userLocation!, 13);
+                _hasCenteredOnUser = true;
+              }
+            },
           ),
           children: [
             TileLayer(
@@ -241,7 +266,7 @@ class _MapScreenState extends State<MapScreen> {
           const SizedBox(height: 12),
           _buildControlButton(
             icon: LucideIcons.navigation,
-            onTap: () => context.read<MapCubit>().loadMap(),
+            onTap: _initLocationAndLoad,
           ),
         ],
       ),

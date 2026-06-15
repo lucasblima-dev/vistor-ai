@@ -346,23 +346,6 @@ GoRouter buildRouter(AuthCubit authCubit) {
                   }
                   return const ReportListScreen();
                 },
-                routes: [
-                  GoRoute(
-                    path: ':id', // /reports/:id
-                    builder: (context, state) {
-                      final report = state.extra as Report?;
-                      if (report != null) {
-                        return BlocProvider(
-                          create: (context) => getIt<ReportCubit>(),
-                          child: ReportDetailScreen(report: report),
-                        );
-                      }
-                      return const Scaffold(
-                        body: Center(child: Text('Erro: Laudo não carregado')),
-                      );
-                    },
-                  ),
-                ],
               ),
             ],
           ),
@@ -409,6 +392,21 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: AppRoutes.allReports,
         builder: (context, state) => const ReportListScreen(),
+      ),
+      GoRoute(
+        path: '/reports/:id',
+        builder: (context, state) {
+          final report = state.extra as Report?;
+          if (report != null) {
+            return BlocProvider(
+              create: (context) => getIt<ReportCubit>(),
+              child: ReportDetailScreen(report: report),
+            );
+          }
+          return const Scaffold(
+            body: Center(child: Text('Erro: Laudo não carregado')),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.adminSettings,
