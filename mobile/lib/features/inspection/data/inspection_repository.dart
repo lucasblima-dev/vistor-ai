@@ -62,12 +62,7 @@ class InspectionRepository {
   Future<List<AuditLog>> getHistory(String id) async {
     try {
       final response = await _apiClient.dio.get(
-        '/audit-logs/',
-        queryParameters: {
-          'entity': 'inspection',
-          'entity_id': id,
-          'limit': 50,
-        },
+        '/inspections/$id/history',
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;

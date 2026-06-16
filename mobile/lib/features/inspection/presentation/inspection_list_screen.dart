@@ -133,6 +133,11 @@ class _InspectionListScreenState extends State<InspectionListScreen> {
                     final cubitSeverity = context.read<InspectionCubit>().currentSeverity;
 
                     final filtered = inspections.where((i) {
+                      // Hide archived inspections by default (unless explicitly filtering by 'archived')
+                      if (cubitStatus != 'archived' && i.status == InspectionStatus.archived) {
+                        return false;
+                      }
+
                       // Filter by status
                       if (cubitStatus != null) {
                         if (cubitStatus == 'open' && i.status != InspectionStatus.open) return false;
