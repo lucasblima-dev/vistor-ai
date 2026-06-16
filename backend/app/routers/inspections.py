@@ -9,6 +9,7 @@ from app.dependencies.db import get_db
 from app.models.user import User
 from app.models.inspection import InspectionStatus, InspectionSeverity
 from app.schemas.inspection import InspectionCreate, InspectionUpdate, InspectionOut
+from app.schemas.audit_log import AuditLogOut
 from app.services import inspection_service
 
 router = APIRouter()
@@ -71,3 +72,11 @@ async def reclassify_inspection(
     user: User = Depends(get_current_user),
 ):
     return await inspection_service.reclassify(db, id, current_user=user)
+
+@router.get("/{id}/history", response_model=List[AuditLogOut])
+async def get_inspection_history(
+    id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return await inspection_service.get_history(db, id, current_user=user)

@@ -53,13 +53,19 @@ class MapCubit extends Cubit<MapState> {
         targetLon = lon;
       }
 
-      final results = await Future.wait([
-        _repository.getNearby(lat: targetLat, lon: targetLon, radiusM: currentRadius),
-        _repository.getHeatmapData(),
-      ]);
+      List<Inspection> inspections = const [];
+      List<HeatmapPoint> heatmapPoints = const [];
 
-      final inspections = results[0] as List<Inspection>;
-      final heatmapPoints = results[1] as List<HeatmapPoint>;
+      await Future.wait([
+        _repository
+            .getNearby(lat: targetLat, lon: targetLon, radiusM: currentRadius)
+            .then((value) => inspections = value)
+            .catchError((_) => inspections = const []),
+        _repository
+            .getHeatmapData()
+            .then((value) => heatmapPoints = value)
+            .catchError((_) => heatmapPoints = const []),
+      ]);
 
       final currentLayer = state.maybeMap(
         loaded: (s) => s.data.activeLayer,

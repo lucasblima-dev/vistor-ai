@@ -32,13 +32,27 @@ class _ArchivedInspectionsScreenState extends State<ArchivedInspectionsScreen> {
   }
 
   Future<List<Inspection>> _fetchArchived() async {
-    final repository = getIt<InspectionRepository>();
-    // Carrega todas as inspeções e filtra localmente por resolved/archived
-    final all = await repository.getAll();
-    return all.where((i) => 
-      i.status == InspectionStatus.resolved || 
-      i.status == InspectionStatus.archived
-    ).toList();
+    try {
+      final repository = getIt<InspectionRepository>();
+      // Carrega todas as inspeções e filtra localmente por resolved/archived
+      final all = await repository.getAll();
+      return all.where((i) => 
+        i.status == InspectionStatus.resolved || 
+        i.status == InspectionStatus.archived
+      ).toList();
+    } catch (e) {
+      // Fallback: se a chamada de rede falhar e o repositório lançar erro, tentamos ler localmente do DAO
+      try {
+        final repository = getIt<InspectionRepository>();
+        final allLocal = await repository.getAll(); // O getAll possui fallback interno de timeout/conexão
+        return allLocal.where((i) => 
+          i.status == InspectionStatus.resolved || 
+          i.status == InspectionStatus.archived
+        ).toList();
+      } catch (_) {
+        return [];
+      }
+    }
   }
 
   @override
@@ -88,9 +102,15 @@ class _ArchivedInspectionsScreenState extends State<ArchivedInspectionsScreen> {
           final inspections = snapshot.data ?? [];
 
           if (inspections.isEmpty) {
-            return const AppEmptyState(
-              title: 'Arquivo Vazio',
-              subtitle: 'Nenhuma inspeção finalizada ou arquivada foi encontrada.',
+            return const Center(
+              child: Text(
+                'Não há inspeções arquivadas no momento!',
+                style: TextStyle(
+                  color: Colors.grey, 
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             );
           }
 

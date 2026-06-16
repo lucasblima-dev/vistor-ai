@@ -650,17 +650,17 @@ class UserCard extends StatelessWidget {
               return [
                 PopupMenuItem<String>(
                   value: 'role_admin',
-                  enabled: !isSelf,
+                  enabled: !isSelf && user.role != UserRole.admin,
                   child: const Text('Tornar Administrador'),
                 ),
                 PopupMenuItem<String>(
                   value: 'role_manager',
-                  enabled: !isSelf,
+                  enabled: !isSelf && user.role != UserRole.manager,
                   child: const Text('Tornar Gestor'),
                 ),
                 PopupMenuItem<String>(
                   value: 'role_inspector',
-                  enabled: !isSelf,
+                  enabled: !isSelf && user.role != UserRole.inspector,
                   child: const Text('Tornar Inspetor'),
                 ),
                 const PopupMenuDivider(),

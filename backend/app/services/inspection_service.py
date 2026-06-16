@@ -10,6 +10,7 @@ import httpx
 from app.models.inspection import Inspection, InspectionStatus, InspectionSeverity
 from app.models.media import MediaType, MediaStatus
 from app.models.user import User, UserRole
+from app.models.audit_log import AuditLog
 from app.schemas.inspection import InspectionCreate, InspectionUpdate
 from app.services import audit_service, storage_service
 from geoalchemy2 import Geometry as GeoGeometry, Geography
@@ -106,6 +107,33 @@ async def get_by_id(db: AsyncSession, inspection_id: UUID, current_user: User) -
     
     await _populate_media_urls(inspection)
     return inspection
+
+async def get_history(db: AsyncSession, inspection_id: UUID, current_user: User) -> List[AuditLog]:
+    # Valida permissão buscando a inspeção. Se o usuário não tiver acesso, get_by_id levantará HTTPException(403) ou 404.
+    await get_by_id(db, inspection_id, current_user)
+    
+    query = (
+        select(AuditLog, User.name)
+        .outerjoin(User, AuditLog.user_id == User.id)
+        .where(
+            and_(
+                AuditLog.entity == "inspection",
+                AuditLog.entity_id == inspection_id
+            )
+        )
+        .order_by(desc(AuditLog.created_at))
+    )
+    
+    result = await db.execute(query)
+    logs = []
+    for row in result.all():
+        audit_log, user_name = row
+        audit_log.user_name = user_name
+        if audit_log.ip_address is not None:
+            audit_log.ip_address = str(audit_log.ip_address)
+        logs.append(audit_log)
+        
+    return logs
 
 async def list_by_user(
     db: AsyncSession, 
