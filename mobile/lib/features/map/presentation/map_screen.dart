@@ -14,6 +14,7 @@ import 'package:vistor_ai_mobile/features/map/presentation/widgets/heatmap_layer
 import 'package:vistor_ai_mobile/features/map/presentation/widgets/inspection_marker.dart';
 import 'package:vistor_ai_mobile/features/map/presentation/widgets/map_filter_sheet.dart';
 import 'package:vistor_ai_mobile/features/map/presentation/widgets/nearby_card.dart';
+import 'package:vistor_ai_mobile/core/utils/env.dart';
 import 'package:vistor_ai_mobile/shared/widgets/error_state.dart';
 import 'package:vistor_ai_mobile/shared/widgets/loading_state.dart';
 
@@ -97,6 +98,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMapStack(BuildContext context, MapData data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Definimos o centro inicial do mapa:
     // 1. Localização atual do usuário identificada pelo GPS
     // 2. Se não houver, a primeira inspeção na lista
@@ -132,8 +134,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.vistorai.app',
+              urlTemplate: '${Env.apiBaseUrl}/api/geo/tiles/{z}/{x}/{y}.png',
             ),
             if (data.activeLayer == MapActiveLayer.markers || 
                 data.activeLayer == MapActiveLayer.both)

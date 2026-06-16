@@ -16,6 +16,8 @@
 *.db-journal
 hive/
 **/vistor_ai.sqlite
+.tile_cache/
+
 
 # Logs
 *.log
