@@ -112,6 +112,29 @@ Após a conclusão destes passos, a API estará acessível em `http://localhost:
 
 ---
 
+## Telas do App
+
+Após instalação bem sucedida, essas são três das telas visíveis no app:
+
+<table align="center" style="border: none;">
+  <tr style="border: none;">
+    <td align="center" style="border: none; padding: 10px;">
+      <img alt="Tela de Splash" src="./assets/splash.png" height="400" /><br>
+      <sub><b>Tela de Loading</b></sub>
+    </td>
+    <td align="center" style="border: none; padding: 10px;">
+      <img alt="Tela de Login" src="./assets/login.jpg" height="400" /><br>
+      <sub><b>Tela Inicial (Login)</b></sub>
+    </td>
+    <td align="center" style="border: none; padding: 10px;">
+      <img alt="Tela Offline" src="./assets/offline.png" height="400" /><br>
+      <sub><b>Tela Offline</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Documentação de Referência
 
 Para detalhes específicos sobre padrões, fluxos, regras de negócio e configuração de ambientes locais de desenvolvimento e depuração, consulte:
